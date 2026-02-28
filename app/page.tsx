@@ -48,13 +48,14 @@ const user = tg?.initDataUnsafe?.user;
         Привет, {user.first_name}
       </p>
     )}
-
-    <div>
-      {tracks.map((track) => (
-        ...
-      ))}
+     <div>
+  {tracks.map((track, index) => (
+    <div key={index} style={{ marginBottom: 10, padding: 10, background: "#222", borderRadius: 8 }}>
+      <p style={{ margin: 0, fontWeight: "bold" }}>{track.title}</p>
+      <p style={{ margin: 0, opacity: 0.7 }}>{track.artist}</p>
     </div>
-  </div>
+  ))}
+</div>
 );
     <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
       <h1>Spotify Mini 🎵</h1>
