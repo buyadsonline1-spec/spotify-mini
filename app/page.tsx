@@ -22,6 +22,7 @@ function formatTime(sec: number) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
+  const [playerOpen, setPlayerOpen] = useState(false);
 
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
@@ -430,6 +431,8 @@ export default function Home() {
                 width: 44,
                 height: 44,
                 borderRadius: 12,
+                onClick={() => setPlayerOpen(true)},
+                style={{ ... , cursor: "pointer" }},
                 background: currentTrack.cover_url
                   ? `url(${currentTrack.cover_url}) center/cover no-repeat`
                   : "linear-gradient(135deg, rgba(29,185,84,0.35), rgba(255,255,255,0.06))",
@@ -481,74 +484,88 @@ export default function Home() {
             {/* Controls */}
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <button
-                onClick={prevTrack}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="prev"
-              >
-                ⏮
-              </button>
+  onClick={(e) => {
+    e.stopPropagation();
+    prevTrack();
+  }}
+  style={{
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+  }}
+  aria-label="prev"
+>
+  ⏮
+</button>
 
-              <button
-                onClick={togglePlay}
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 999,
-                  border: "none",
-                  background: "rgba(29,185,84,0.95)",
-                  color: "#000",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  boxShadow: "0 10px 30px rgba(29,185,84,0.25)",
-                }}
-                aria-label="toggle play"
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    togglePlay();
+  }}
+  style={{
+    width: 54,
+    height: 54,
+    borderRadius: 999,
+    border: "none",
+    background: "rgba(59,130,246,0.95)",
+    color: "#000",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
+  }}
+  aria-label="toggle play"
+>
+  {isPlaying ? "❚❚" : "▶"}
+</button>
 
-              <button
-                onClick={nextTrack}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="next"
-              >
-                ⏭
-              </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    nextTrack();
+  }}
+  style={{
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+  }}
+  aria-label="next"
+>
+  ⏭
+</button>
 
-              <button
-                onClick={() => toggleFavorite(currentTrack.id)}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: favIds.has(currentTrack.id) ? "rgba(29,185,84,0.20)" : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="favorite"
-                title="Like"
-              >
-                {favIds.has(currentTrack.id) ? "♥" : "♡"}
-              </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    toggleFavorite(currentTrack.id);
+  }}
+  style={{
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: favIds.has(currentTrack.id)
+      ? "rgba(59,130,246,0.20)"
+      : "rgba(255,255,255,0.06)",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+  }}
+  aria-label="favorite"
+  title="Like"
+>
+  {favIds.has(currentTrack.id) ? "♥" : "♡"}
+</button>
             </div>
           </div>
         </div>
