@@ -297,8 +297,7 @@ export default function Home() {
         paddingBottom: currentTrack ? 160 : 90,
       }}
     >
-
-     {/* Header */}
+{/* Header */}
 <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
   <div
     style={{
@@ -356,27 +355,6 @@ export default function Home() {
     </div>
   )}
 </div>
-
-        {/* Search only on Home */}
-        {tab === "home" && (
-          <div style={{ marginTop: 14 }}>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск трека или артиста…"
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,0.10)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                outline: "none",
-              }}
-            />
-          </div>
-        )}
-      </div>
 
       {/* Content */}
       <div style={{ padding: "0 20px" }}>
