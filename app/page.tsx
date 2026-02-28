@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { getSupabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [tracks, setTracks] = useState<any[]>([]);
   const [currentTrack, setCurrentTrack] = useState<any | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const supabase = getSupabase();
 
   useEffect(() => {
     fetchTracks();
