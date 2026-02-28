@@ -239,7 +239,7 @@ export default function Home() {
   }
 
   const bg =
-    "radial-gradient(1200px 600px at 20% -10%, rgba(29,185,84,0.25), transparent 60%), #0b0b0b";
+    "radial-gradient(1200px 600px at 20% -10%, rgba (59,130,246,0.25), transparent 60%), #0b0b0b";
 
   return (
     <div
