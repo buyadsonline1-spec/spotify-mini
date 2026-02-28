@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -13,21 +13,16 @@ export default function Home() {
   }, []);
 
   async function fetchTracks() {
-  const { data, error } = await supabase
-    .from("tracks")
-    .select("*")
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("tracks").select("*");
 
-  console.log("SUPABASE ERROR:", error);
-  console.log("TRACKS DATA:", data);
-  console.log("DATA LENGTH:", data?.length);
+    if (error) {
+      console.error("SUPABASE ERROR:", error);
+      setTracks([]);
+      return;
+    }
 
-  if (error) {
-    console.error(error);
-  } else {
     setTracks(data ?? []);
   }
-}
 
   function playTrack(track: any) {
     setCurrentTrack(track);
@@ -39,62 +34,104 @@ export default function Home() {
   const user = tg?.initDataUnsafe?.user;
 
   return (
-    <div style={{ padding: 20, color: "#fff", background: "#111", minHeight: "100vh", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ marginBottom: 5 }}>Spotify Mini 🎵</h1>
-      {user && <p style={{ opacity: 0.7, marginBottom: 20 }}>Привет, {user.first_name}</p>}
-
-      <div>
-        {tracks.map((track) => (
-          <div
-            key={track.id}
-            onClick={() => playTrack(track)}
-            style={{
-              padding: 12,
-              marginBottom: 10,
-              background: "#222",
-              borderRadius: 8,
-              cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#333")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#222")}
-          >
-            <strong>{track.title}</strong>
-            <div style={{ fontSize: 14, opacity: 0.7 }}>{track.artist}</div>
-          </div>
-        ))}
-      </div>
-
-     {currentTrack && (
-  <div style={{ marginTop: 30, padding: 15, background: "#222", borderRadius: 10 }}>
-    <h3 style={{ margin: 0 }}>Now playing:</h3>
-    <p style={{ margin: "5px 0" }}>
-      {currentTrack.title} — {currentTrack.artist}
-    </p>
-
-    <audio
-      ref={audioRef}
-      src={currentTrack.audio_url}
-      autoPlay
-      style={{ display: "none" }}
-    />
-
-    <button
-      onClick={() => audioRef.current?.play()}
+    <div
       style={{
-        background: "#1DB954",
-        color: "#000",
-        border: "none",
-        padding: "10px 20px",
-        borderRadius: 20,
-        cursor: "pointer",
-        fontWeight: "bold"
+        padding: 20,
+        color: "#fff",
+        background: "#111",
+        minHeight: "100vh",
+        fontFamily: "Arial, sans-serif",
       }}
     >
-      ▶ Play
-    </button>
-  </div>
-)}
+      <h1 style={{ marginBottom: 5 }}>Spotify Mini 🎵</h1>
+      {user && (
+        <p style={{ opacity: 0.7, marginBottom: 20 }}>
+          Привет, {user.first_name}
+        </p>
+      )}
+
+      {tracks.length === 0 ? (
+        <p style={{ opacity: 0.7 }}>Треков пока нет (или нет доступа).</p>
+      ) : (
+        <div>
+          {tracks.map((track) => (
+            <div
+              key={track.id}
+              onClick={() => playTrack(track)}
+              style={{
+                padding: 12,
+                marginBottom: 10,
+                background: "#222",
+                borderRadius: 12,
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ fontWeight: 700 }}>{track.title}</div>
+              <div style={{ fontSize: 14, opacity: 0.7 }}>{track.artist}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentTrack && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 15,
+            background: "#1c1c1c",
+            borderRadius: 14,
+          }}
+        >
+          <div style={{ opacity: 0.7, fontSize: 12 }}>Now playing</div>
+          <div style={{ fontWeight: 700, marginTop: 6 }}>
+            {currentTrack.title}
+          </div>
+          <div style={{ opacity: 0.7, fontSize: 14 }}>
+            {currentTrack.artist}
+          </div>
+
+          {/* Сам audio скрыт */}
+          <audio
+            ref={audioRef}
+            src={currentTrack.audio_url}
+            autoPlay
+            style={{ display: "none" }}
+          />
+
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <button
+              onClick={() => audioRef.current?.play()}
+              style={{
+                background: "#1DB954",
+                color: "#000",
+                border: "none",
+                padding: "10px 16px",
+                borderRadius: 999,
+                cursor: "pointer",
+                fontWeight: 700,
+                flex: 1,
+              }}
+            >
+              ▶ Play
+            </button>
+            <button
+              onClick={() => audioRef.current?.pause()}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "none",
+                padding: "10px 16px",
+                borderRadius: 999,
+                cursor: "pointer",
+                fontWeight: 700,
+                flex: 1,
+              }}
+            >
+              ⏸ Pause
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
