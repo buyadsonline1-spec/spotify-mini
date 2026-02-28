@@ -22,7 +22,6 @@ function formatTime(sec: number) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
-  const [playerOpen, setPlayerOpen] = useState(false);
 
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
@@ -37,52 +36,58 @@ export default function Home() {
   const [pos, setPos] = useState(0);
   const [dur, setDur] = useState(0);
 
+  // shuffle + repeat
   const [shuffle, setShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"off" | "all" | "one">("off");
 
+  // fullscreen player
+  const [playerOpen, setPlayerOpen] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Telegram user
+  // Telegram
   const tg =
     typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
   const user = tg?.initDataUnsafe?.user;
 
-  // userId for favorites: tg:<id> or guest:<random>
+  // userId for favorites
   const [userId, setUserId] = useState<string>("");
 
-  // favorites: set of track ids
+  // favorites set
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     tg?.ready?.();
   }, [tg]);
 
-  // Create stable userId (telegram or guest)
+  // stable userId
   useEffect(() => {
     if (user?.id) {
       setUserId(`tg:${user.id}`);
       return;
     }
-
-    // guest id in localStorage
     if (typeof window !== "undefined") {
-      const key = "spotify_mini_guest_id";
+      const key = "pokoro_guest_id";
       let g = localStorage.getItem(key);
       if (!g) {
-        g = `guest:${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
+        g = `guest:${Math.random().toString(16).slice(2)}${Date.now().toString(
+          16
+        )}`;
         localStorage.setItem(key, g);
       }
       setUserId(g);
     }
   }, [user?.id]);
 
-  // Load tracks once
+  // load tracks
   useEffect(() => {
     fetchTracks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchTracks() {
     const { data, error } = await supabase.from("tracks").select("*");
+
     if (error) {
       console.error("SUPABASE tracks error:", error);
       setTracks([]);
@@ -99,13 +104,12 @@ export default function Home() {
 
     setTracks(normalized);
 
-    // если трек ещё не выбран — выберем первый
     if (!currentTrackId && normalized.length > 0) {
       setCurrentTrackId(normalized[0].id);
     }
   }
 
-  // Load favorites when userId appears
+  // load favorites when userId ready
   useEffect(() => {
     if (!userId) return;
     fetchFavorites();
@@ -124,16 +128,17 @@ export default function Home() {
       return;
     }
 
-    const next = new Set<string>((data ?? []).map((r: any) => String(r.track_id)));
-    setFavIds(next);
+    setFavIds(new Set((data ?? []).map((r: any) => String(r.track_id))));
   }
 
-  // Derived lists
+  // lists
   const filteredTracks = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return tracks;
     return tracks.filter(
-      (t) => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q)
     );
   }, [tracks, query]);
 
@@ -142,10 +147,8 @@ export default function Home() {
     return tracks.filter((t) => favIds.has(t.id));
   }, [tracks, favIds]);
 
+  // queue depends on tab
   const queue = useMemo(() => {
-    // очередность переключения треков:
-    // на Home — по поисковой выдаче
-    // на Favorites — по избранному
     return tab === "favorites" ? favoriteTracks : filteredTracks;
   }, [tab, favoriteTracks, filteredTracks]);
 
@@ -154,40 +157,32 @@ export default function Home() {
     return queue.findIndex((t) => t.id === currentTrackId);
   }, [queue, currentTrackId]);
 
-  // Play selected track
   function playTrackById(id: string) {
     setCurrentTrackId(id);
     setTimeout(() => {
       const audio = audioRef.current;
       if (!audio) return;
       audio.load();
-      audio.play().then(() => setIsPlaying(true)).catch((e) => console.log("play error", e));
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => console.log("play error", e));
     }, 50);
   }
 
   function togglePlay() {
     const audio = audioRef.current;
     if (!audio) return;
+
     if (audio.paused) {
-      audio.play().then(() => setIsPlaying(true)).catch((e) => console.log("play error", e));
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => console.log("play error", e));
     } else {
       audio.pause();
       setIsPlaying(false);
     }
-  }
-
-  function nextTrack() {
-    if (queue.length === 0) return;
-    const idx = currentIndex >= 0 ? currentIndex : 0;
-    const nextIdx = (idx + 1) % queue.length;
-    playTrackById(queue[nextIdx].id);
-  }
-
-  function prevTrack() {
-    if (queue.length === 0) return;
-    const idx = currentIndex >= 0 ? currentIndex : 0;
-    const prevIdx = (idx - 1 + queue.length) % queue.length;
-    playTrackById(queue[prevIdx].id);
   }
 
   function seekTo(percent: number) {
@@ -198,13 +193,59 @@ export default function Home() {
     setPos(next);
   }
 
-  // Favorites toggle
+  function nextTrack() {
+    if (queue.length === 0) return;
+
+    // repeat one
+    if (repeatMode === "one" && currentTrackId) {
+      playTrackById(currentTrackId);
+      return;
+    }
+
+    // shuffle
+    if (shuffle) {
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      playTrackById(queue[randomIndex].id);
+      return;
+    }
+
+    const idx = currentIndex >= 0 ? currentIndex : 0;
+    const nextIdx = idx + 1;
+
+    if (nextIdx >= queue.length) {
+      if (repeatMode === "all") playTrackById(queue[0].id);
+      else setIsPlaying(false);
+    } else {
+      playTrackById(queue[nextIdx].id);
+    }
+  }
+
+  function prevTrack() {
+    if (queue.length === 0) return;
+
+    // repeat one (логично: Prev тоже перезапускает текущий)
+    if (repeatMode === "one" && currentTrackId) {
+      playTrackById(currentTrackId);
+      return;
+    }
+
+    if (shuffle) {
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      playTrackById(queue[randomIndex].id);
+      return;
+    }
+
+    const idx = currentIndex >= 0 ? currentIndex : 0;
+    const prevIdx = (idx - 1 + queue.length) % queue.length;
+    playTrackById(queue[prevIdx].id);
+  }
+
   async function toggleFavorite(trackId: string) {
     if (!userId) return;
 
     const isFav = favIds.has(trackId);
 
-    // optimistic update
+    // optimistic
     setFavIds((prev) => {
       const n = new Set(prev);
       if (isFav) n.delete(trackId);
@@ -242,8 +283,8 @@ export default function Home() {
     }
   }
 
-    const bg =
-  "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
+  const bg =
+    "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
 
   return (
     <div
@@ -253,15 +294,22 @@ export default function Home() {
         color: "#fff",
         fontFamily:
           'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
-        paddingBottom: currentTrack ? 140 : 90, // место под нижнюю панель
+        paddingBottom: currentTrack ? 160 : 90,
       }}
     >
       {/* Header */}
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "space-between",
+          }}
+        >
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>pokoro</div>
-            <div style={{ opacity: 0.7, fontSize: 13, marginTop: 2 }}>
+            <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
+            <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
               {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
             </div>
           </div>
@@ -274,7 +322,7 @@ export default function Home() {
               background: "rgba(255,255,255,0.08)",
               display: "grid",
               placeItems: "center",
-              fontWeight: 800,
+              fontWeight: 900,
             }}
             title="Profile"
           >
@@ -292,7 +340,7 @@ export default function Home() {
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                borderRadius: 14,
+                borderRadius: 16,
                 border: "1px solid rgba(255,255,255,0.10)",
                 background: "rgba(255,255,255,0.06)",
                 color: "#fff",
@@ -317,7 +365,7 @@ export default function Home() {
 
         {tab === "favorites" && (
           <>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Favorites</div>
+            <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
             <TrackList
               tracks={favoriteTracks}
               currentTrackId={currentTrackId}
@@ -331,61 +379,34 @@ export default function Home() {
         {tab === "profile" && (
           <div
             style={{
-              padding: 14,
-              borderRadius: 16,
+              padding: 16,
+              borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.08)",
               background: "rgba(255,255,255,0.05)",
             }}
           >
             <div style={{ fontSize: 16, fontWeight: 900 }}>Profile</div>
-            <div style={{ marginTop: 10, opacity: 0.8 }}>
+
+            <div style={{ marginTop: 12, opacity: 0.85, lineHeight: 1.7 }}>
               <div>
                 <b>Имя:</b> {user?.first_name ?? "Гость"}
               </div>
               <div>
-                <b>Username:</b> {user?.username ? `@${user.username}` : "нет"}
+                <b>Username:</b>{" "}
+                {user?.username ? `@${user.username}` : "нет"}
               </div>
               <div>
                 <b>User ID:</b> {userId || "…"}
               </div>
-              <div style={{ marginTop: 10 }}>
+              <div>
                 <b>Избранное:</b> {favIds.size}
               </div>
-            </div>
-
-            <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-              <button
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  border: "none",
-                  background: "rgba(29,185,84,0.95)",
-                  color: "#000",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                onClick={() => alert("Сделаем оплату позже (Premium).")}
-              >
-                Upgrade to Premium
-              </button>
-
-              <button
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  setFavIds(new Set());
-                  alert("Локально очистили список. Если надо — сделаем кнопку 'очистить избранное' в БД.");
-                }}
-              >
-                (debug) Clear favorites in UI
-              </button>
+              <div>
+                <b>Shuffle:</b> {shuffle ? "on" : "off"}
+              </div>
+              <div>
+                <b>Repeat:</b> {repeatMode}
+              </div>
             </div>
           </div>
         )}
@@ -410,41 +431,67 @@ export default function Home() {
         />
       )}
 
-      {/* Bottom Player */}
+      {/* Bottom mini-player (click opens fullscreen) */}
       {currentTrack && (
         <div
           style={{
             position: "fixed",
             left: 0,
             right: 0,
-            bottom: 64, // чтобы не перекрывал таббар
+            bottom: 64, // чтобы не перекрыть таббар
             padding: 14,
             zIndex: 10,
-            background: "linear-gradient(to top, rgba(11,11,11,0.98), rgba(11,11,11,0.86))",
+            background:
+              "linear-gradient(to top, rgba(7,10,18,0.98), rgba(7,10,18,0.86))",
             borderTop: "1px solid rgba(255,255,255,0.08)",
             backdropFilter: "blur(10px)",
           }}
         >
-          <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            onClick={() => setPlayerOpen(true)}
+            style={{
+              maxWidth: 820,
+              margin: "0 auto",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              cursor: "pointer",
+            }}
+          >
             <div
               style={{
                 width: 44,
                 height: 44,
                 borderRadius: 12,
-                onClick={() => setPlayerOpen(true)},
-                style={{ ... , cursor: "pointer" }},
                 background: currentTrack.cover_url
                   ? `url(${currentTrack.cover_url}) center/cover no-repeat`
-                  : "linear-gradient(135deg, rgba(29,185,84,0.35), rgba(255,255,255,0.06))",
+                  : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
                 flex: "0 0 auto",
               }}
             />
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 900, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 13,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {currentTrack.title}
               </div>
-              <div style={{ opacity: 0.7, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+              <div
+                style={{
+                  opacity: 0.7,
+                  fontSize: 12,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  marginTop: 2,
+                }}
+              >
                 {currentTrack.artist}
               </div>
 
@@ -452,7 +499,9 @@ export default function Home() {
               <div style={{ marginTop: 10 }}>
                 <div
                   onClick={(e) => {
-                    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                    e.stopPropagation();
+                    const rect =
+                      (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                     const percent = (e.clientX - rect.left) / rect.width;
                     seekTo(percent);
                   }}
@@ -468,13 +517,21 @@ export default function Home() {
                     style={{
                       height: "100%",
                       width: dur ? `${(pos / dur) * 100}%` : "0%",
-                      background: "rgba(29,185,84,0.95)",
+                      background: "rgba(59,130,246,0.95)",
                       borderRadius: 999,
                     }}
                   />
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, opacity: 0.7, marginTop: 6 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    opacity: 0.7,
+                    marginTop: 6,
+                  }}
+                >
                   <span>{formatTime(pos)}</span>
                   <span>{formatTime(dur)}</span>
                 </div>
@@ -483,90 +540,388 @@ export default function Home() {
 
             {/* Controls */}
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {/* Shuffle */}
               <button
-  onClick={(e) => {
-    e.stopPropagation();
-    prevTrack();
-  }}
-  style={{
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer",
-  }}
-  aria-label="prev"
->
-  ⏮
-</button>
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShuffle((s) => !s);
+                }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: shuffle
+                    ? "rgba(59,130,246,0.22)"
+                    : "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                aria-label="shuffle"
+                title="Shuffle"
+              >
+                🔀
+              </button>
 
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    togglePlay();
-  }}
-  style={{
-    width: 54,
-    height: 54,
-    borderRadius: 999,
-    border: "none",
-    background: "rgba(59,130,246,0.95)",
-    color: "#000",
-    fontWeight: 900,
-    cursor: "pointer",
-    boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
-  }}
-  aria-label="toggle play"
->
-  {isPlaying ? "❚❚" : "▶"}
-</button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevTrack();
+                }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                aria-label="prev"
+              >
+                ⏮
+              </button>
 
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    nextTrack();
-  }}
-  style={{
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer",
-  }}
-  aria-label="next"
->
-  ⏭
-</button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlay();
+                }}
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 999,
+                  border: "none",
+                  background: "rgba(59,130,246,0.95)",
+                  color: "#000",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
+                }}
+                aria-label="toggle play"
+              >
+                {isPlaying ? "❚❚" : "▶"}
+              </button>
 
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    toggleFavorite(currentTrack.id);
-  }}
-  style={{
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: favIds.has(currentTrack.id)
-      ? "rgba(59,130,246,0.20)"
-      : "rgba(255,255,255,0.06)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer",
-  }}
-  aria-label="favorite"
-  title="Like"
->
-  {favIds.has(currentTrack.id) ? "♥" : "♡"}
-</button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextTrack();
+                }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                aria-label="next"
+              >
+                ⏭
+              </button>
+
+              {/* Repeat */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRepeatMode((m) =>
+                    m === "off" ? "all" : m === "all" ? "one" : "off"
+                  );
+                }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background:
+                    repeatMode !== "off"
+                      ? "rgba(59,130,246,0.22)"
+                      : "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                aria-label="repeat"
+                title="Repeat"
+              >
+                {repeatMode === "one" ? "🔂" : "🔁"}
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(currentTrack.id);
+                }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: favIds.has(currentTrack.id)
+                    ? "rgba(59,130,246,0.20)"
+                    : "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                aria-label="favorite"
+                title="Like"
+              >
+                {favIds.has(currentTrack.id) ? "♥" : "♡"}
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen player overlay */}
+      {currentTrack && playerOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            background:
+              "radial-gradient(900px 500px at 20% 0%, rgba(59,130,246,0.25), transparent 60%), #070A12",
+            color: "#fff",
+            padding: 20,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Top bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <button
+              onClick={() => setPlayerOpen(false)}
+              style={{
+                border: "none",
+                background: "rgba(255,255,255,0.08)",
+                color: "#fff",
+                width: 44,
+                height: 44,
+                borderRadius: 999,
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ fontWeight: 900, opacity: 0.9 }}>Now Playing</div>
+
+            <button
+              onClick={() => toggleFavorite(currentTrack.id)}
+              style={{
+                border: "none",
+                background: favIds.has(currentTrack.id)
+                  ? "rgba(59,130,246,0.25)"
+                  : "rgba(255,255,255,0.08)",
+                color: "#fff",
+                width: 44,
+                height: 44,
+                borderRadius: 999,
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              {favIds.has(currentTrack.id) ? "♥" : "♡"}
+            </button>
+          </div>
+
+          {/* Cover */}
+          <div style={{ marginTop: 22, display: "grid", placeItems: "center" }}>
+            <div
+              style={{
+                width: "min(320px, 78vw)",
+                height: "min(320px, 78vw)",
+                borderRadius: 24,
+                background: currentTrack.cover_url
+                  ? `url(${currentTrack.cover_url}) center/cover no-repeat`
+                  : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
+                boxShadow: "0 25px 80px rgba(0,0,0,0.45)",
+              }}
+            />
+          </div>
+
+          {/* Title */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
+              {currentTrack.title}
+            </div>
+            <div style={{ opacity: 0.75, marginTop: 6, fontSize: 14 }}>
+              {currentTrack.artist}
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div style={{ marginTop: 18 }}>
+            <div
+              onClick={(e) => {
+                const rect =
+                  (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                seekTo(percent);
+              }}
+              style={{
+                height: 10,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.10)",
+                overflow: "hidden",
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: dur ? `${(pos / dur) * 100}%` : "0%",
+                  background: "rgba(59,130,246,0.95)",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12,
+                opacity: 0.75,
+                marginTop: 8,
+              }}
+            >
+              <span>{formatTime(pos)}</span>
+              <span>{formatTime(dur)}</span>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div
+            style={{
+              marginTop: 22,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <button
+              onClick={() => setShuffle((s) => !s)}
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: shuffle
+                  ? "rgba(59,130,246,0.22)"
+                  : "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+              title="Shuffle"
+            >
+              🔀
+            </button>
+
+            <button
+              onClick={prevTrack}
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+                fontSize: 18,
+              }}
+            >
+              ⏮
+            </button>
+
+            <button
+              onClick={togglePlay}
+              style={{
+                width: 86,
+                height: 86,
+                borderRadius: 999,
+                border: "none",
+                background: "rgba(59,130,246,0.95)",
+                color: "#000",
+                fontWeight: 900,
+                cursor: "pointer",
+                boxShadow: "0 12px 40px rgba(59,130,246,0.28)",
+                fontSize: 22,
+              }}
+            >
+              {isPlaying ? "❚❚" : "▶"}
+            </button>
+
+            <button
+              onClick={nextTrack}
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+                fontSize: 18,
+              }}
+            >
+              ⏭
+            </button>
+
+            <button
+              onClick={() =>
+                setRepeatMode((m) =>
+                  m === "off" ? "all" : m === "all" ? "one" : "off"
+                )
+              }
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background:
+                  repeatMode !== "off"
+                    ? "rgba(59,130,246,0.22)"
+                    : "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+              title="Repeat"
+            >
+              {repeatMode === "one" ? "🔂" : "🔁"}
+            </button>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          <div
+            style={{
+              textAlign: "center",
+              opacity: 0.55,
+              fontSize: 12,
+              paddingBottom: 10,
+            }}
+          >
+            Нажми ✕ чтобы свернуть
           </div>
         </div>
       )}
@@ -580,16 +935,31 @@ export default function Home() {
           bottom: 0,
           height: 64,
           zIndex: 11,
-          background: "rgba(11,11,11,0.92)",
+          background: "rgba(7,10,18,0.92)",
           borderTop: "1px solid rgba(255,255,255,0.08)",
           backdropFilter: "blur(10px)",
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
         }}
       >
-        <TabButton active={tab === "home"} onClick={() => setTab("home")} label="Home" icon="⌂" />
-        <TabButton active={tab === "favorites"} onClick={() => setTab("favorites")} label="Favorites" icon="♥" />
-        <TabButton active={tab === "profile"} onClick={() => setTab("profile")} label="Profile" icon="☺" />
+        <TabButton
+          active={tab === "home"}
+          onClick={() => setTab("home")}
+          label="Home"
+          icon="⌂"
+        />
+        <TabButton
+          active={tab === "favorites"}
+          onClick={() => setTab("favorites")}
+          label="Favorites"
+          icon="♥"
+        />
+        <TabButton
+          active={tab === "profile"}
+          onClick={() => setTab("profile")}
+          label="Profile"
+          icon="☺"
+        />
       </div>
     </div>
   );
@@ -612,7 +982,7 @@ function TabButton({
       style={{
         border: "none",
         background: "transparent",
-        color: active ? "rgba(29,185,84,0.95)" : "rgba(255,255,255,0.75)",
+        color: active ? "rgba(59,130,246,0.95)" : "rgba(255,255,255,0.75)",
         fontWeight: 900,
         cursor: "pointer",
         display: "grid",
@@ -655,9 +1025,13 @@ function TrackList({
             key={t.id}
             style={{
               padding: 12,
-              borderRadius: 16,
-              border: isActive ? "1px solid rgba(29,185,84,0.55)" : "1px solid rgba(255,255,255,0.08)",
-              background: isActive ? "rgba(29,185,84,0.10)" : "rgba(255,255,255,0.05)",
+              borderRadius: 18,
+              border: isActive
+                ? "1px solid rgba(59,130,246,0.55)"
+                : "1px solid rgba(255,255,255,0.08)",
+              background: isActive
+                ? "rgba(59,130,246,0.10)"
+                : "rgba(255,255,255,0.05)",
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -682,15 +1056,33 @@ function TrackList({
                   borderRadius: 12,
                   background: t.cover_url
                     ? `url(${t.cover_url}) center/cover no-repeat`
-                    : "linear-gradient(135deg, rgba(29,185,84,0.35), rgba(255,255,255,0.06))",
+                    : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
                   flex: "0 0 auto",
                 }}
               />
+
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {t.title}
                 </div>
-                <div style={{ opacity: 0.7, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+                <div
+                  style={{
+                    opacity: 0.7,
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    marginTop: 2,
+                  }}
+                >
                   {t.artist}
                 </div>
               </div>
@@ -703,7 +1095,9 @@ function TrackList({
                 height: 38,
                 borderRadius: 999,
                 border: "1px solid rgba(255,255,255,0.12)",
-                background: isFav ? "rgba(29,185,84,0.20)" : "rgba(255,255,255,0.06)",
+                background: isFav
+                  ? "rgba(59,130,246,0.20)"
+                  : "rgba(255,255,255,0.06)",
                 color: "#fff",
                 fontWeight: 900,
                 cursor: "pointer",
