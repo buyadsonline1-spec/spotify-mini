@@ -158,17 +158,14 @@ export default function Home() {
   }, [queue, currentTrackId]);
 
   function playTrackById(id: string) {
-    setCurrentTrackId(id);
-    setTimeout(() => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      audio.load();
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => console.log("play error", e));
-    }, 50);
-  }
+  setCurrentTrackId(id);
+  setIsPlaying(false); // важно: новый трек выбран, но не играет
+  setTimeout(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.load(); // подгружаем трек, но НЕ запускаем
+  }, 50);
+}
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -432,7 +429,7 @@ export default function Home() {
             setIsPlaying(false);
             nextTrack();
           }}
-          autoPlay
+
         />
       )}
 
