@@ -23,12 +23,18 @@ export default function Home() {
 
     setTracks(data ?? []);
   }
-
   function playTrack(track: any) {
-    setCurrentTrack(track);
-    setTimeout(() => audioRef.current?.play(), 100);
-  }
+  setCurrentTrack(track);
 
+  // принудительно перезагружаем аудио и запускаем
+  setTimeout(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.load(); // важно!
+    audio.play().catch((e) => console.log("play error", e));
+  }, 50);
+}
   const tg =
     typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
   const user = tg?.initDataUnsafe?.user;
@@ -92,6 +98,7 @@ export default function Home() {
 
           {/* Сам audio скрыт */}
           <audio
+            key={currentTrack.id}  
             ref={audioRef}
             src={currentTrack.audio_url}
             autoPlay
