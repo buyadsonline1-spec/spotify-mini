@@ -72,3 +72,5 @@ export default function Home() {
     </div>
   );
 }
+const tg = typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
+const user = tg?.initDataUnsafe?.user;
