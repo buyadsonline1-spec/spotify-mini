@@ -36,6 +36,9 @@ export default function Home() {
   const [pos, setPos] = useState(0);
   const [dur, setDur] = useState(0);
 
+  const [shuffle, setShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<"off" | "all" | "one">("off");
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Telegram user
