@@ -6,8 +6,19 @@ import { supabase } from "@/lib/supabase";
 export default function Home() {
   const [tracks, setTracks] = useState<any[]>([]);
   const [currentTrack, setCurrentTrack] = useState<any | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Получение Telegram пользователя
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
+      const tg = (window as any).Telegram.WebApp;
+      tg.ready();
+      setUser(tg.initDataUnsafe?.user || null);
+    }
+  }, []);
+
+  // Получение треков из Supabase
   useEffect(() => {
     fetchTracks();
   }, []);
@@ -32,52 +43,70 @@ export default function Home() {
     }, 100);
   }
 
-  const tg =
-    typeof window !== "undefined"
-      ? (window as any).Telegram?.WebApp
-      : null;
-
-  const user = tg?.initDataUnsafe?.user;
-
   return (
-    <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
-      <h1>Spotify Mini 🎵</h1>
+    <div style={{
+      padding: 20,
+      color: "white",
+      background: "#111",
+      minHeight: "100vh",
+      fontFamily: "Arial, sans-serif"
+    }}>
+      <h1 style={{ textAlign: "center" }}>Spotify Mini 🎵</h1>
 
       {user && (
-        <p style={{ opacity: 0.7 }}>
-          Привет, {user.first_name}
+        <p style={{ textAlign: "center", opacity: 0.7, marginBottom: 30 }}>
+          Привет, {user.first_name}!
         </p>
       )}
 
-      <div>
-        {tracks.map((track, index) => (
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr",
+        gap: 15,
+        maxWidth: 600,
+        margin: "0 auto"
+      }}>
+        {tracks.map((track) => (
           <div
-            key={track.id || index}
+            key={track.id}
             onClick={() => playTrack(track)}
             style={{
-              padding: 10,
-              marginBottom: 10,
-              background: "#1e1e1e",
-              borderRadius: 8,
-              cursor: "pointer"
+              padding: 15,
+              background: "#222",
+              borderRadius: 10,
+              cursor: "pointer",
+              transition: "background 0.2s",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#333")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#222")}
           >
-            <strong>{track.title}</strong>
+            <strong style={{ fontSize: 16 }}>{track.title}</strong>
             <div style={{ fontSize: 14, opacity: 0.7 }}>{track.artist}</div>
           </div>
         ))}
       </div>
 
       {currentTrack && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Now playing:</h3>
-          <p>{currentTrack.title} — {currentTrack.artist}</p>
+        <div style={{
+          marginTop: 40,
+          padding: 20,
+          background: "#222",
+          borderRadius: 10,
+          maxWidth: 600,
+          marginLeft: "auto",
+          marginRight: "auto",
+          textAlign: "center"
+        }}>
+          <h3>Сейчас играет:</h3>
+          <p style={{ margin: "5px 0" }}>
+            {currentTrack.title} — {currentTrack.artist}
+          </p>
           <audio
             ref={audioRef}
             src={currentTrack.audio_url}
             controls
             autoPlay
-            style={{ width: "100%" }}
+            style={{ width: "100%", marginTop: 10 }}
           />
         </div>
       )}
