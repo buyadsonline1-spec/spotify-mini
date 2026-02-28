@@ -297,38 +297,65 @@ export default function Home() {
         paddingBottom: currentTrack ? 160 : 90,
       }}
     >
-      {/* Header */}
-      <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
-            <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
-              {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
-            </div>
-          </div>
 
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 999,
-              background: "rgba(255,255,255,0.08)",
-              display: "grid",
-              placeItems: "center",
-              fontWeight: 900,
-            }}
-            title="Profile"
-          >
-            {user?.first_name?.[0]?.toUpperCase?.() ?? "♪"}
-          </div>
-        </div>
+     {/* Header */}
+<div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      justifyContent: "space-between",
+    }}
+  >
+    <div>
+      <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
+      <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
+        {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
+      </div>
+    </div>
+
+    <button
+      onClick={() => setTab("profile")}
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: 999,
+        background: "rgba(255,255,255,0.08)",
+        display: "grid",
+        placeItems: "center",
+        fontWeight: 900,
+        border: "none",
+        color: "#fff",
+        cursor: "pointer",
+      }}
+      title="Profile"
+      aria-label="Open profile"
+    >
+      {user?.first_name?.[0]?.toUpperCase?.() ?? "♪"}
+    </button>
+  </div>
+
+  {/* Search only on Home */}
+  {tab === "home" && (
+    <div style={{ marginTop: 14 }}>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Поиск трека или артиста…"
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          outline: "none",
+        }}
+      />
+    </div>
+  )}
+</div>
 
         {/* Search only on Home */}
         {tab === "home" && (
@@ -540,30 +567,7 @@ export default function Home() {
 
             {/* Controls */}
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              {/* Shuffle */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShuffle((s) => !s);
-                }}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: shuffle
-                    ? "rgba(59,130,246,0.22)"
-                    : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="shuffle"
-                title="Shuffle"
-              >
-                🔀
-              </button>
-
+              
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -624,34 +628,7 @@ export default function Home() {
               >
                 ⏭
               </button>
-
-              {/* Repeat */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRepeatMode((m) =>
-                    m === "off" ? "all" : m === "all" ? "one" : "off"
-                  );
-                }}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background:
-                    repeatMode !== "off"
-                      ? "rgba(59,130,246,0.22)"
-                      : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="repeat"
-                title="Repeat"
-              >
-                {repeatMode === "one" ? "🔂" : "🔁"}
-              </button>
-
+          
               <button
                 onClick={(e) => {
                   e.stopPropagation();
