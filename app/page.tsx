@@ -60,21 +60,36 @@ export default function Home() {
         ))}
       </div>
 
-      {currentTrack && (
-        <div style={{ marginTop: 30, padding: 15, background: "#222", borderRadius: 10 }}>
-          <h3 style={{ margin: 0 }}>Now playing:</h3>
-          <p style={{ margin: "5px 0" }}>
-            {currentTrack.title} — {currentTrack.artist}
-          </p>
-          <audio ref={audioRef} src={currentTrack.audio_url} controls={false} />
-            ref={audioRef}
-            src={currentTrack.audio_url}
-            controls={false}
-            autoPlay
-            style={{ width: "100%", borderRadius: 5 }}
-          />
-        </div>
-      )}
+     {currentTrack && (
+  <div style={{ marginTop: 30, padding: 15, background: "#222", borderRadius: 10 }}>
+    <h3 style={{ margin: 0 }}>Now playing:</h3>
+    <p style={{ margin: "5px 0" }}>
+      {currentTrack.title} — {currentTrack.artist}
+    </p>
+
+    <audio
+      ref={audioRef}
+      src={currentTrack.audio_url}
+      autoPlay
+      style={{ display: "none" }}
+    />
+
+    <button
+      onClick={() => audioRef.current?.play()}
+      style={{
+        background: "#1DB954",
+        color: "#000",
+        border: "none",
+        padding: "10px 20px",
+        borderRadius: 20,
+        cursor: "pointer",
+        fontWeight: "bold"
+      }}
+    >
+      ▶ Play
+    </button>
+  </div>
+)}
     </div>
   );
 }
