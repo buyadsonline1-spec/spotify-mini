@@ -13,14 +13,21 @@ export default function Home() {
   }, []);
 
   async function fetchTracks() {
-    const { data, error } = await supabase
-      .from("tracks")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (error) console.error(error);
-    else setTracks(data);
+  console.log("SUPABASE ERROR:", error);
+  console.log("TRACKS DATA:", data);
+  console.log("DATA LENGTH:", data?.length);
+
+  if (error) {
+    console.error(error);
+  } else {
+    setTracks(data ?? []);
   }
+}
 
   function playTrack(track: any) {
     setCurrentTrack(track);
