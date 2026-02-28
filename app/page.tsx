@@ -238,8 +238,8 @@ export default function Home() {
     }
   }
 
-  const bg =
-    "radial-gradient(1200px 600px at 20% -10%, rgba (59,130,246,0.25), transparent 60%), #0b0b0b";
+    const bg =
+  "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
 
   return (
     <div
@@ -256,7 +256,7 @@ export default function Home() {
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>Spotify Mini</div>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>pokoro</div>
             <div style={{ opacity: 0.7, fontSize: 13, marginTop: 2 }}>
               {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
             </div>
