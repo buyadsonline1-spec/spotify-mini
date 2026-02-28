@@ -32,8 +32,30 @@ export default function Home() {
       audioRef.current?.play();
     }, 100);
   }
+const tg =
+  typeof window !== "undefined"
+    ? (window as any).Telegram?.WebApp
+    : null;
 
-  return (
+const user = tg?.initDataUnsafe?.user;
+  return (return (
+  <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
+    
+    <h1>Spotify Mini 🎵</h1>
+
+    {user && (
+      <p style={{ opacity: 0.7 }}>
+        Привет, {user.first_name}
+      </p>
+    )}
+
+    <div>
+      {tracks.map((track) => (
+        ...
+      ))}
+    </div>
+  </div>
+);
     <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
       <h1>Spotify Mini 🎵</h1>
 
@@ -72,5 +94,3 @@ export default function Home() {
     </div>
   );
 }
-const tg = typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
-const user = tg?.initDataUnsafe?.user;
