@@ -1,33 +1,74 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [tracks, setTracks] = useState<any[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    async function loadTracks() {
-      const { data } = await supabase.from("tracks").select("*");
-      setTracks(data || []);
-    }
-
-    loadTracks();
+    fetchTracks();
   }, []);
 
+  async function fetchTracks() {
+    const { data, error } = await supabase
+      .from("tracks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setTracks(data);
+    }
+  }
+
+  function playTrack(track: any) {
+    setCurrentTrack(track);
+
+    setTimeout(() => {
+      audioRef.current?.play();
+    }, 100);
+  }
+
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Мой Spotify 🎵</h1>
+    <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
+      <h1>Spotify Mini 🎵</h1>
 
-      {tracks.map((track) => (
-        <div key={track.id} style={{ marginBottom: 20 }}>
-          <p>{track.title}</p>
-          <p>{track.artist}</p>
+      <div>
+        {tracks.map((track) => (
+          <div
+            key={track.id}
+            onClick={() => playTrack(track)}
+            style={{
+              padding: 10,
+              marginBottom: 10,
+              background: "#1e1e1e",
+              borderRadius: 8,
+              cursor: "pointer"
+            }}
+          >
+            <strong>{track.title}</strong>
+            <div style={{ fontSize: 14, opacity: 0.7 }}>{track.artist}</div>
+          </div>
+        ))}
+      </div>
 
-          <audio controls src={track.audio_url}></audio>
+      {currentTrack && (
+        <div style={{ marginTop: 30 }}>
+          <h3>Now playing:</h3>
+          <p>{currentTrack.title} — {currentTrack.artist}</p>
+          <audio
+            ref={audioRef}
+            src={currentTrack.audio_url}
+            controls
+            autoPlay
+            style={{ width: "100%" }}
+          />
         </div>
-      ))}
+      )}
     </div>
   );
 }
-      
