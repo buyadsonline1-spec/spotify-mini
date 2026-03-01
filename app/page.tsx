@@ -45,9 +45,6 @@ export default function Home() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerMounted, setPlayerMounted] = useState(false);
   const [playerClosing, setPlayerClosing] = useState(false);
-  const [playerMounted, setPlayerMounted] = useState(false);
-  const [playerClosing, setPlayerClosing] = useState(false);
-
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Telegram
