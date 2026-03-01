@@ -45,6 +45,8 @@ export default function Home() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerMounted, setPlayerMounted] = useState(false);
   const [playerClosing, setPlayerClosing] = useState(false);
+  const [playerMounted, setPlayerMounted] = useState(false);
+  const [playerClosing, setPlayerClosing] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -270,7 +272,24 @@ function closePlayer() {
 
   async function toggleFavorite(trackId: string) {
     if (!userId) return;
+    function openPlayer() {
+  setPlayerMounted(true);
+  setPlayerClosing(true);
+  setPlayerOpen(true);
 
+  requestAnimationFrame(() => {
+    setPlayerClosing(false);
+  });
+}
+
+function closePlayer() {
+  setPlayerClosing(true);
+  setTimeout(() => {
+    setPlayerOpen(false);
+    setPlayerMounted(false);
+    setPlayerClosing(false);
+  }, 260);
+}
     const isFav = favIds.has(trackId);
 
     // optimistic
