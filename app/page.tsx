@@ -279,6 +279,25 @@ function closePlayer() {
   });
 }
 
+function openPlayer() {
+  setPlayerMounted(true);
+  setPlayerClosing(true);
+  setPlayerOpen(true);
+
+  requestAnimationFrame(() => {
+    setPlayerClosing(false);
+  });
+}
+
+function closePlayer() {
+  setPlayerClosing(true);
+  setTimeout(() => {
+    setPlayerOpen(false);
+    setPlayerMounted(false);
+    setPlayerClosing(false);
+  }, 260);
+}
+
 function closePlayer() {
   setPlayerClosing(true);
   setTimeout(() => {
