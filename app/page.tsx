@@ -208,21 +208,6 @@ export default function Home() {
   function nextTrack() {
     if (queue.length === 0) return;
 
-    function openPlayer() {
-  setPlayerMounted(true);
-  setPlayerClosing(false);
-  setPlayerOpen(true);
-}
-
-function closePlayer() {
-  setPlayerClosing(true);
-  setTimeout(() => {
-    setPlayerOpen(false);
-    setPlayerMounted(false);
-    setPlayerClosing(false);
-  }, 260); // время анимации
-}
-
     // repeat one
     if (repeatMode === "one" && currentTrackId) {
       playTrackById(currentTrackId);
@@ -270,24 +255,7 @@ function closePlayer() {
   async function toggleFavorite(trackId: string) {
     if (!userId) return;
     
-function openPlayer() {
-  setPlayerMounted(true);
-  setPlayerClosing(true);
-  setPlayerOpen(true);
 
-  requestAnimationFrame(() => {
-    setPlayerClosing(false);
-  });
-}
-
-function closePlayer() {
-  setPlayerClosing(true);
-  setTimeout(() => {
-    setPlayerOpen(false);
-    setPlayerMounted(false);
-    setPlayerClosing(false);
-  }, 260);
-}
     const isFav = favIds.has(trackId);
 
     // optimistic
@@ -327,6 +295,24 @@ function closePlayer() {
       }
     }
   }
+  function openPlayer() {
+  setPlayerMounted(true);
+  setPlayerClosing(true);
+  setPlayerOpen(true);
+
+  requestAnimationFrame(() => {
+    setPlayerClosing(false);
+  });
+}
+
+function closePlayer() {
+  setPlayerClosing(true);
+  setTimeout(() => {
+    setPlayerOpen(false);
+    setPlayerMounted(false);
+    setPlayerClosing(false);
+  }, 260);
+}
 
   const bg =
     "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
