@@ -13,6 +13,8 @@ type Track = {
   cover_url?: string | null;
 };
 
+type Playlist = { id: string; name: string };
+
 function formatTime(sec: number) {
   if (!Number.isFinite(sec) || sec < 0) return "0:00";
   const m = Math.floor(sec / 60);
@@ -23,15 +25,8 @@ function formatTime(sec: number) {
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
 
-  const [hasInteracted, setHasInteracted] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
-  type Playlist = { id: string; name: string };
-
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
-  const [playlistTrackIds, setPlaylistTrackIds] = useState<Set<string>>(new Set());
-  const [newPlaylistName, setNewPlaylistName] = useState("");
 
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const currentTrack = useMemo(
@@ -43,14 +38,14 @@ export default function Home() {
   const [pos, setPos] = useState(0);
   const [dur, setDur] = useState(0);
 
-  // shuffle + repeat
+  // shuffle + repeat (для логики next/prev оставляем; в мини-плеере не показываем)
   const [shuffle, setShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"off" | "all" | "one">("off");
 
-  // fullscreen player
-  const [playerOpen, setPlayerOpen] = useState(false);
+  // fullscreen player animation
   const [playerMounted, setPlayerMounted] = useState(false);
   const [playerClosing, setPlayerClosing] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Telegram
@@ -58,17 +53,26 @@ export default function Home() {
     typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
   const user = tg?.initDataUnsafe?.user;
 
-  // userId for favorites
+  // userId for favorites/playlists: tg:<id> or guest:<random>
   const [userId, setUserId] = useState<string>("");
 
   // favorites set
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
+  // playlists (only in profile)
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [playlistTrackIds, setPlaylistTrackIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+
+  // --- INIT TG ---
   useEffect(() => {
     tg?.ready?.();
   }, [tg]);
 
-  // stable userId
+  // --- stable userId ---
   useEffect(() => {
     if (user?.id) {
       setUserId(`tg:${user.id}`);
@@ -87,7 +91,7 @@ export default function Home() {
     }
   }, [user?.id]);
 
-  // load tracks
+  // --- load tracks ---
   useEffect(() => {
     fetchTracks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,29 +121,13 @@ export default function Home() {
     }
   }
 
-  // load favorites when userId ready
+  // --- favorites + playlists ---
   useEffect(() => {
     if (!userId) return;
     fetchFavorites();
+    fetchPlaylists();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  fetchPlaylists()
-  useEffect(() => {
-  if (!userId) return;
-  fetchFavorites();
-  fetchPlaylists();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [userId]);
-
-useEffect(() => {
-  if (!activePlaylistId) {
-    setPlaylistTrackIds(new Set());
-    return;
-  }
-  fetchPlaylistTracks(activePlaylistId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [activePlaylistId]);
 
   async function fetchFavorites() {
     const { data, error } = await supabase
@@ -156,196 +144,8 @@ useEffect(() => {
     setFavIds(new Set((data ?? []).map((r: any) => String(r.track_id))));
   }
 
-  async function fetchPlaylists() {
-  if (!userId) return;
-
-  const { data, error } = await supabase
-    .from("playlists")
-    .select("id,name")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("SUPABASE playlists error:", error);
-    setPlaylists([]);
-    return;
-  }
-
-  setPlaylists((data ?? []).map((p: any) => ({ id: String(p.id), name: p.name })));
-}
-
-async function createPlaylist() {
-  const name = newPlaylistName.trim();
-  if (!userId || !name) return;
-
-  const { data, error } = await supabase
-    .from("playlists")
-    .insert({ user_id: userId, name })
-    .select("id,name")
-    .single();
-
-  if (error) {
-    console.error("create playlist error:", error);
-    return;
-  }
-
-  setNewPlaylistName("");
-  await fetchPlaylists();
-  setActivePlaylistId(String(data.id));
-}
-
-async function fetchPlaylistTracks(playlistId: string) {
-  const { data, error } = await supabase
-    .from("playlist_tracks")
-    .select("track_id")
-    .eq("playlist_id", playlistId);
-
-  if (error) {
-    console.error("playlist_tracks error:", error);
-    setPlaylistTrackIds(new Set());
-    return;
-  }
-
-  setPlaylistTrackIds(new Set((data ?? []).map((r: any) => String(r.track_id))));
-}
-
-async function removeFromPlaylist(playlistId: string, trackId: string) {
-  const { error } = await supabase
-    .from("playlist_tracks")
-    .delete()
-    .eq("playlist_id", playlistId)
-    .eq("track_id", trackId);
-
-  if (error) {
-    console.error("removeFromPlaylist error:", error);
-    return;
-  }
-
-  await fetchPlaylistTracks(playlistId);
-}
-
-  // lists
-  const filteredTracks = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return tracks;
-    return tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q)
-    );
-  }, [tracks, query]);
-
-  const favoriteTracks = useMemo(() => {
-    if (favIds.size === 0) return [];
-    return tracks.filter((t) => favIds.has(t.id));
-  }, [tracks, favIds]);
-
-  // queue depends on tab
-  const queue = useMemo(() => {
-    return tab === "favorites" ? favoriteTracks : filteredTracks;
-  }, [tab, favoriteTracks, filteredTracks]);
-
-  const currentIndex = useMemo(() => {
-    if (!currentTrackId) return -1;
-    return queue.findIndex((t) => t.id === currentTrackId);
-  }, [queue, currentTrackId]);
-
-  function playTrackById(id: string) {
-  setCurrentTrackId(id);
-
-  // пользователь выбрал трек => считаем что было взаимодействие
-  setHasInteracted(true);
-
-  setTimeout(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.load();
-
-    // Вариант A: после взаимодействия — сразу проигрываем
-    audio
-      .play()
-      .then(() => setIsPlaying(true))
-      .catch((e) => {
-        console.log("play blocked:", e);
-        setIsPlaying(false);
-      });
-  }, 50);
-}
-
-  function togglePlay() {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (audio.paused) {
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => console.log("play error", e));
-    } else {
-      audio.pause();
-      setIsPlaying(false);
-    }
-  }
-
-  function seekTo(percent: number) {
-    const audio = audioRef.current;
-    if (!audio || !dur) return;
-    const next = Math.max(0, Math.min(dur, percent * dur));
-    audio.currentTime = next;
-    setPos(next);
-  }
-
-  function nextTrack() {
-    if (queue.length === 0) return;
-
-    // repeat one
-    if (repeatMode === "one" && currentTrackId) {
-      playTrackById(currentTrackId);
-      return;
-    }
-
-    // shuffle
-    if (shuffle) {
-      const randomIndex = Math.floor(Math.random() * queue.length);
-      playTrackById(queue[randomIndex].id);
-      return;
-    }
-
-    const idx = currentIndex >= 0 ? currentIndex : 0;
-    const nextIdx = idx + 1;
-
-    if (nextIdx >= queue.length) {
-      if (repeatMode === "all") playTrackById(queue[0].id);
-      else setIsPlaying(false);
-    } else {
-      playTrackById(queue[nextIdx].id);
-    }
-  }
-
-  function prevTrack() {
-    if (queue.length === 0) return;
-
-    // repeat one (логично: Prev тоже перезапускает текущий)
-    if (repeatMode === "one" && currentTrackId) {
-      playTrackById(currentTrackId);
-      return;
-    }
-
-    if (shuffle) {
-      const randomIndex = Math.floor(Math.random() * queue.length);
-      playTrackById(queue[randomIndex].id);
-      return;
-    }
-
-    const idx = currentIndex >= 0 ? currentIndex : 0;
-    const prevIdx = (idx - 1 + queue.length) % queue.length;
-    playTrackById(queue[prevIdx].id);
-  }
-
   async function toggleFavorite(trackId: string) {
     if (!userId) return;
-    
 
     const isFav = favIds.has(trackId);
 
@@ -366,8 +166,7 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
 
       if (error) {
         console.error("delete favorite error:", error);
-        // rollback
-        setFavIds((prev) => new Set(prev).add(trackId));
+        setFavIds((prev) => new Set(prev).add(trackId)); // rollback
       }
     } else {
       const { error } = await supabase.from("favorites").insert({
@@ -377,34 +176,238 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
 
       if (error) {
         console.error("insert favorite error:", error);
-        // rollback
         setFavIds((prev) => {
           const n = new Set(prev);
           n.delete(trackId);
           return n;
-        });
+        }); // rollback
       }
     }
   }
+
+  async function fetchPlaylists() {
+    if (!userId) return;
+
+    // если у тебя НЕТ created_at, просто убери order (ниже уже безопасно без него)
+    const { data, error } = await supabase
+      .from("playlists")
+      .select("id,name")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("SUPABASE playlists error:", error);
+      setPlaylists([]);
+      return;
+    }
+
+    setPlaylists(
+      (data ?? []).map((p: any) => ({ id: String(p.id), name: p.name }))
+    );
+  }
+
+  async function createPlaylist() {
+    const name = newPlaylistName.trim();
+    if (!userId || !name) return;
+
+    const { data, error } = await supabase
+      .from("playlists")
+      .insert({ user_id: userId, name })
+      .select("id,name")
+      .single();
+
+    if (error) {
+      console.error("create playlist error:", error);
+      return;
+    }
+
+    setNewPlaylistName("");
+    await fetchPlaylists();
+    setActivePlaylistId(String(data.id));
+  }
+
+  useEffect(() => {
+    if (!activePlaylistId) {
+      setPlaylistTrackIds(new Set());
+      return;
+    }
+    fetchPlaylistTracks(activePlaylistId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePlaylistId]);
+
+  async function fetchPlaylistTracks(playlistId: string) {
+    const { data, error } = await supabase
+      .from("playlist_tracks")
+      .select("track_id")
+      .eq("playlist_id", playlistId);
+
+    if (error) {
+      console.error("playlist_tracks error:", error);
+      setPlaylistTrackIds(new Set());
+      return;
+    }
+
+    setPlaylistTrackIds(
+      new Set((data ?? []).map((r: any) => String(r.track_id)))
+    );
+  }
+
+  async function removeFromPlaylist(playlistId: string, trackId: string) {
+    const { error } = await supabase
+      .from("playlist_tracks")
+      .delete()
+      .eq("playlist_id", playlistId)
+      .eq("track_id", trackId);
+
+    if (error) {
+      console.error("removeFromPlaylist error:", error);
+      return;
+    }
+
+    await fetchPlaylistTracks(playlistId);
+  }
+
+  // --- lists ---
+  const filteredTracks = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return tracks;
+    return tracks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q)
+    );
+  }, [tracks, query]);
+
+  const favoriteTracks = useMemo(() => {
+    if (favIds.size === 0) return [];
+    return tracks.filter((t) => favIds.has(t.id));
+  }, [tracks, favIds]);
+
+  // --- queue depends on tab (home uses filtered, favorites uses fav list) ---
+  const queue = useMemo(() => {
+    return tab === "favorites" ? favoriteTracks : filteredTracks;
+  }, [tab, favoriteTracks, filteredTracks]);
+
+  const currentIndex = useMemo(() => {
+    if (!currentTrackId) return -1;
+    return queue.findIndex((t) => t.id === currentTrackId);
+  }, [queue, currentTrackId]);
+
+  // --- playback ---
+  function setTrack(id: string) {
+    setCurrentTrackId(id);
+    // ВАЖНО: НЕ запускаем autoplay здесь.
+    // Музыка начнет играть только если пользователь нажмет Play/кнопку.
+    setIsPlaying(false);
+    setPos(0);
+    setDur(0);
+    setTimeout(() => {
+      const a = audioRef.current;
+      if (!a) return;
+      a.load();
+      a.pause();
+    }, 0);
+  }
+
+  function playTrackById(id: string) {
+    // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
+    setCurrentTrackId(id);
+    setTimeout(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.load();
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => {
+          console.log("play blocked:", e);
+          setIsPlaying(false);
+        });
+    }, 50);
+  }
+
+  function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => {
+          console.log("play blocked:", e);
+          setIsPlaying(false);
+        });
+    } else {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  }
+
+  function seekTo(percent: number) {
+    const audio = audioRef.current;
+    if (!audio || !dur) return;
+    const next = Math.max(0, Math.min(dur, percent * dur));
+    audio.currentTime = next;
+    setPos(next);
+  }
+
+  function nextTrack() {
+    if (queue.length === 0) return;
+
+    if (repeatMode === "one" && currentTrackId) {
+      playTrackById(currentTrackId);
+      return;
+    }
+
+    if (shuffle) {
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      playTrackById(queue[randomIndex].id);
+      return;
+    }
+
+    const idx = currentIndex >= 0 ? currentIndex : 0;
+    const nextIdx = idx + 1;
+
+    if (nextIdx >= queue.length) {
+      if (repeatMode === "all") playTrackById(queue[0].id);
+      else setIsPlaying(false);
+    } else {
+      playTrackById(queue[nextIdx].id);
+    }
+  }
+
+  function prevTrack() {
+    if (queue.length === 0) return;
+
+    if (repeatMode === "one" && currentTrackId) {
+      playTrackById(currentTrackId);
+      return;
+    }
+
+    if (shuffle) {
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      playTrackById(queue[randomIndex].id);
+      return;
+    }
+
+    const idx = currentIndex >= 0 ? currentIndex : 0;
+    const prevIdx = (idx - 1 + queue.length) % queue.length;
+    playTrackById(queue[prevIdx].id);
+  }
+
+  // --- player open/close animation ---
   function openPlayer() {
-  setPlayerMounted(true);
-  setPlayerClosing(true);
-  setPlayerOpen(true);
+    setPlayerMounted(true);
+    setPlayerClosing(true);
+    requestAnimationFrame(() => setPlayerClosing(false));
+  }
 
-  requestAnimationFrame(() => {
-    setPlayerClosing(false);
-  });
-}
+  function closePlayer() {
+    setPlayerClosing(true);
+    setTimeout(() => setPlayerMounted(false), 260);
+  }
 
-function closePlayer() {
-  setPlayerClosing(true);
-  setTimeout(() => {
-    setPlayerOpen(false);
-    setPlayerMounted(false);
-    setPlayerClosing(false);
-  }, 260);
-}
-
+  // --- UI constants ---
   const bg =
     "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
 
@@ -419,64 +422,64 @@ function closePlayer() {
         paddingBottom: currentTrack ? 160 : 90,
       }}
     >
-{/* Header */}
-<div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      justifyContent: "space-between",
-    }}
-  >
-    <div>
-      <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
-      <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
-        {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
+      {/* Header */}
+      <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
+            <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
+              {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setTab("profile")}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.08)",
+              display: "grid",
+              placeItems: "center",
+              fontWeight: 900,
+              border: "none",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+            title="Profile"
+            aria-label="Open profile"
+          >
+            {user?.first_name?.[0]?.toUpperCase?.() ?? "♪"}
+          </button>
+        </div>
+
+        {/* Search only on Home */}
+        {tab === "home" && (
+          <div style={{ marginTop: 14 }}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Поиск трека или артиста…"
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                borderRadius: 16,
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                outline: "none",
+              }}
+            />
+          </div>
+        )}
       </div>
-    </div>
-
-    <button
-      onClick={() => setTab("profile")}
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 999,
-        background: "rgba(255,255,255,0.08)",
-        display: "grid",
-        placeItems: "center",
-        fontWeight: 900,
-        border: "none",
-        color: "#fff",
-        cursor: "pointer",
-      }}
-      title="Profile"
-      aria-label="Open profile"
-    >
-      {user?.first_name?.[0]?.toUpperCase?.() ?? "♪"}
-    </button>
-  </div>
-
-  {/* Search only on Home */}
-  {tab === "home" && (
-    <div style={{ marginTop: 14 }}>
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Поиск трека или артиста…"
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          outline: "none",
-        }}
-      />
-    </div>
-  )}
-</div>
 
       {/* Content */}
       <div style={{ padding: "0 20px" }}>
@@ -533,133 +536,162 @@ function closePlayer() {
               </div>
               <div>
                 <b>Repeat:</b> {repeatMode}
-                <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.10)" }}>
-  <div style={{ fontSize: 16, fontWeight: 900 }}>Playlists</div>
+              </div>
+            </div>
 
-  {/* create */}
-  <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-    <input
-      value={newPlaylistName}
-      onChange={(e) => setNewPlaylistName(e.target.value)}
-      placeholder="Новый плейлист…"
-      style={{
-        flex: 1,
-        padding: "12px 14px",
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        outline: "none",
-      }}
-    />
-    <button
-      onClick={createPlaylist}
-      style={{
-        padding: "12px 14px",
-        borderRadius: 16,
-        border: "none",
-        background: "rgba(59,130,246,0.95)",
-        color: "#000",
-        fontWeight: 900,
-        cursor: "pointer",
-      }}
-    >
-      + Create
-    </button>
-  </div>
+            {/* Playlists only in profile */}
+            <div
+              style={{
+                marginTop: 18,
+                paddingTop: 14,
+                borderTop: "1px solid rgba(255,255,255,0.10)",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 900 }}>Playlists</div>
 
-  {/* list */}
-  <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-    {playlists.length === 0 ? (
-      <div style={{ opacity: 0.75 }}>Плейлистов пока нет.</div>
-    ) : (
-      playlists.map((p) => (
-        <button
-          key={p.id}
-          onClick={() => setActivePlaylistId(p.id)}
-          style={{
-            textAlign: "left",
-            padding: 12,
-            borderRadius: 16,
-            border:
-              activePlaylistId === p.id
-                ? "1px solid rgba(59,130,246,0.55)"
-                : "1px solid rgba(255,255,255,0.08)",
-            background:
-              activePlaylistId === p.id
-                ? "rgba(59,130,246,0.10)"
-                : "rgba(255,255,255,0.04)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          {p.name}
-        </button>
-      ))
-    )}
-  </div>
-
-  {/* tracks inside */}
-  {activePlaylistId && (
-    <div style={{ marginTop: 16 }}>
-      <div style={{ fontWeight: 900, marginBottom: 10, opacity: 0.9 }}>
-        Tracks in playlist
-      </div>
-
-      {tracks.filter((t) => playlistTrackIds.has(t.id)).length === 0 ? (
-        <div style={{ opacity: 0.75 }}>
-          Пусто. Добавление треков сделаем следующим шагом.
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: 10 }}>
-          {tracks
-            .filter((t) => playlistTrackIds.has(t.id))
-            .map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  padding: 12,
-                  borderRadius: 18,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  background: "rgba(255,255,255,0.04)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <button
-                  onClick={() => playTrackById(t.id)}
-                  style={{ all: "unset", cursor: "pointer", flex: 1, minWidth: 0 }}
-                >
-                  <div style={{ fontWeight: 900 }}>{t.title}</div>
-                  <div style={{ opacity: 0.7, fontSize: 13 }}>{t.artist}</div>
-                </button>
-
-                <button
-                  onClick={() => removeFromPlaylist(activePlaylistId, t.id)}
+              {/* create */}
+              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                <input
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  placeholder="Новый плейлист…"
                   style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    flex: 1,
+                    padding: "12px 14px",
+                    borderRadius: 16,
+                    border: "1px solid rgba(255,255,255,0.10)",
                     background: "rgba(255,255,255,0.06)",
                     color: "#fff",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  onClick={createPlaylist}
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 16,
+                    border: "none",
+                    background: "rgba(59,130,246,0.95)",
+                    color: "#000",
                     fontWeight: 900,
                     cursor: "pointer",
                   }}
-                  title="Remove"
                 >
-                  −
+                  + Create
                 </button>
               </div>
-            ))}
-        </div>
-      )}
-    </div>
-  )}
-</div>
-       
+
+              {/* list */}
+              <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+                {playlists.length === 0 ? (
+                  <div style={{ opacity: 0.75 }}>Плейлистов пока нет.</div>
+                ) : (
+                  playlists.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setActivePlaylistId(p.id)}
+                      style={{
+                        textAlign: "left",
+                        padding: 12,
+                        borderRadius: 16,
+                        border:
+                          activePlaylistId === p.id
+                            ? "1px solid rgba(59,130,246,0.55)"
+                            : "1px solid rgba(255,255,255,0.08)",
+                        background:
+                          activePlaylistId === p.id
+                            ? "rgba(59,130,246,0.10)"
+                            : "rgba(255,255,255,0.04)",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: 900,
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* tracks inside */}
+              {activePlaylistId && (
+                <div style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      marginBottom: 10,
+                      opacity: 0.9,
+                    }}
+                  >
+                    Tracks in playlist
+                  </div>
+
+                  {tracks.filter((t) => playlistTrackIds.has(t.id)).length ===
+                  0 ? (
+                    <div style={{ opacity: 0.75 }}>
+                      Пусто. Добавление треков сделаем следующим шагом.
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {tracks
+                        .filter((t) => playlistTrackIds.has(t.id))
+                        .map((t) => (
+                          <div
+                            key={t.id}
+                            style={{
+                              padding: 12,
+                              borderRadius: 18,
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              background: "rgba(255,255,255,0.04)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
+                          >
+                            <button
+                              onClick={() => playTrackById(t.id)}
+                              style={{
+                                all: "unset",
+                                cursor: "pointer",
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              <div style={{ fontWeight: 900 }}>{t.title}</div>
+                              <div style={{ opacity: 0.7, fontSize: 13 }}>
+                                {t.artist}
+                              </div>
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                removeFromPlaylist(activePlaylistId, t.id)
+                              }
+                              style={{
+                                width: 38,
+                                height: 38,
+                                borderRadius: 999,
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                background: "rgba(255,255,255,0.06)",
+                                color: "#fff",
+                                fontWeight: 900,
+                                cursor: "pointer",
+                              }}
+                              title="Remove"
+                            >
+                              −
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Hidden audio */}
       {currentTrack && (
         <audio
@@ -675,7 +707,7 @@ function closePlayer() {
             setIsPlaying(false);
             nextTrack();
           }}
-
+          // ВАЖНО: нет autoPlay
         />
       )}
 
@@ -686,7 +718,7 @@ function closePlayer() {
             position: "fixed",
             left: 0,
             right: 0,
-            bottom: 64, // чтобы не перекрыть таббар
+            bottom: 64,
             padding: 14,
             zIndex: 10,
             background:
@@ -786,9 +818,8 @@ function closePlayer() {
               </div>
             </div>
 
-            {/* Controls */}
+            {/* Controls (NO shuffle/repeat here) */}
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -849,7 +880,7 @@ function closePlayer() {
               >
                 ⏭
               </button>
-          
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -877,284 +908,287 @@ function closePlayer() {
         </div>
       )}
 
-{/* Fullscreen player overlay (animated) */}
-{currentTrack && playerMounted && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 50,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "flex-end",
-    }}
-  >
-    {/* Dim background */}
-    <div
-      onClick={closePlayer}
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        opacity: playerClosing ? 0 : 1,
-        transition: "opacity 260ms ease",
-      }}
-    />
-
-    {/* Sliding sheet */}
-    <div
-      style={{
-        position: "relative",
-        zIndex: 1,
-        height: "100%",
-        background:
-          "radial-gradient(900px 500px at 20% 0%, rgba(59,130,246,0.25), transparent 60%), #070A12",
-        color: "#fff",
-        padding: 20,
-        display: "flex",
-        flexDirection: "column",
-        transform: playerClosing ? "translateY(100%)" : "translateY(0%)",
-        transition: "transform 260ms ease",
-        willChange: "transform",
-      }}
-    >
-      {/* Top bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <button
-          onClick={closePlayer}
-          style={{
-            border: "none",
-            background: "rgba(255,255,255,0.08)",
-            color: "#fff",
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-          aria-label="Close player"
-        >
-          ✕
-        </button>
-
-        <div style={{ fontWeight: 900, opacity: 0.9 }}>Now Playing</div>
-
-        <button
-          onClick={() => toggleFavorite(currentTrack.id)}
-          style={{
-            border: "none",
-            background: favIds.has(currentTrack.id)
-              ? "rgba(59,130,246,0.25)"
-              : "rgba(255,255,255,0.08)",
-            color: "#fff",
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-          aria-label="Favorite"
-          title="Like"
-        >
-          {favIds.has(currentTrack.id) ? "♥" : "♡"}
-        </button>
-      </div>
-
-      {/* Cover */}
-      <div style={{ marginTop: 22, display: "grid", placeItems: "center" }}>
+      {/* Fullscreen player overlay (animated slide-up) */}
+      {currentTrack && playerMounted && (
         <div
           style={{
-            width: "min(320px, 78vw)",
-            height: "min(320px, 78vw)",
-            borderRadius: 24,
-            background: currentTrack.cover_url
-              ? `url(${currentTrack.cover_url}) center/cover no-repeat`
-              : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
-            boxShadow: "0 25px 80px rgba(0,0,0,0.45)",
-          }}
-        />
-      </div>
-
-      {/* Title */}
-      <div style={{ marginTop: 18 }}>
-        <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
-          {currentTrack.title}
-        </div>
-        <div style={{ opacity: 0.75, marginTop: 6, fontSize: 14 }}>
-          {currentTrack.artist}
-        </div>
-      </div>
-
-      {/* Progress */}
-      <div style={{ marginTop: 18 }}>
-        <div
-          onClick={(e) => {
-            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            seekTo(percent);
-          }}
-          style={{
-            height: 10,
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.10)",
-            overflow: "hidden",
-            cursor: "pointer",
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
           }}
         >
+          {/* Dim background */}
           <div
+            onClick={closePlayer}
             style={{
-              height: "100%",
-              width: dur ? `${(pos / dur) * 100}%` : "0%",
-              background: "rgba(59,130,246,0.95)",
-              borderRadius: 999,
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.55)",
+              opacity: playerClosing ? 0 : 1,
+              transition: "opacity 260ms ease",
             }}
           />
+
+          {/* Sliding sheet */}
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              height: "100%",
+              background:
+                "radial-gradient(900px 500px at 20% 0%, rgba(59,130,246,0.25), transparent 60%), #070A12",
+              color: "#fff",
+              padding: 20,
+              display: "flex",
+              flexDirection: "column",
+              transform: playerClosing ? "translateY(100%)" : "translateY(0%)",
+              transition: "transform 260ms ease",
+              willChange: "transform",
+            }}
+          >
+            {/* Top bar */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <button
+                onClick={closePlayer}
+                style={{
+                  border: "none",
+                  background: "rgba(255,255,255,0.08)",
+                  color: "#fff",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  fontWeight: 900,
+                }}
+                aria-label="Close player"
+              >
+                ✕
+              </button>
+
+              <div style={{ fontWeight: 900, opacity: 0.9 }}>Now Playing</div>
+
+              <button
+                onClick={() => toggleFavorite(currentTrack.id)}
+                style={{
+                  border: "none",
+                  background: favIds.has(currentTrack.id)
+                    ? "rgba(59,130,246,0.25)"
+                    : "rgba(255,255,255,0.08)",
+                  color: "#fff",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  fontWeight: 900,
+                }}
+                aria-label="Favorite"
+                title="Like"
+              >
+                {favIds.has(currentTrack.id) ? "♥" : "♡"}
+              </button>
+            </div>
+
+            {/* Cover */}
+            <div style={{ marginTop: 22, display: "grid", placeItems: "center" }}>
+              <div
+                style={{
+                  width: "min(320px, 78vw)",
+                  height: "min(320px, 78vw)",
+                  borderRadius: 24,
+                  background: currentTrack.cover_url
+                    ? `url(${currentTrack.cover_url}) center/cover no-repeat`
+                    : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
+                  boxShadow: "0 25px 80px rgba(0,0,0,0.45)",
+                }}
+              />
+            </div>
+
+            {/* Title */}
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
+                {currentTrack.title}
+              </div>
+              <div style={{ opacity: 0.75, marginTop: 6, fontSize: 14 }}>
+                {currentTrack.artist}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div style={{ marginTop: 18 }}>
+              <div
+                onClick={(e) => {
+                  const rect =
+                    (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                  const percent = (e.clientX - rect.left) / rect.width;
+                  seekTo(percent);
+                }}
+                style={{
+                  height: 10,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.10)",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: dur ? `${(pos / dur) * 100}%` : "0%",
+                    background: "rgba(59,130,246,0.95)",
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  opacity: 0.75,
+                  marginTop: 8,
+                }}
+              >
+                <span>{formatTime(pos)}</span>
+                <span>{formatTime(dur)}</span>
+              </div>
+            </div>
+
+            {/* Controls (fullscreen can keep shuffle/repeat) */}
+            <div
+              style={{
+                marginTop: 22,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <button
+                onClick={() => setShuffle((s) => !s)}
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: shuffle
+                    ? "rgba(59,130,246,0.22)"
+                    : "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                title="Shuffle"
+                aria-label="Shuffle"
+              >
+                🔀
+              </button>
+
+              <button
+                onClick={prevTrack}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  fontSize: 18,
+                }}
+                aria-label="Prev"
+              >
+                ⏮
+              </button>
+
+              <button
+                onClick={togglePlay}
+                style={{
+                  width: 86,
+                  height: 86,
+                  borderRadius: 999,
+                  border: "none",
+                  background: "rgba(59,130,246,0.95)",
+                  color: "#000",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  boxShadow: "0 12px 40px rgba(59,130,246,0.28)",
+                  fontSize: 22,
+                }}
+                aria-label="Play pause"
+              >
+                {isPlaying ? "❚❚" : "▶"}
+              </button>
+
+              <button
+                onClick={nextTrack}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  fontSize: 18,
+                }}
+                aria-label="Next"
+              >
+                ⏭
+              </button>
+
+              <button
+                onClick={() =>
+                  setRepeatMode((m) =>
+                    m === "off" ? "all" : m === "all" ? "one" : "off"
+                  )
+                }
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background:
+                    repeatMode !== "off"
+                      ? "rgba(59,130,246,0.22)"
+                      : "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+                title="Repeat"
+                aria-label="Repeat"
+              >
+                {repeatMode === "one" ? "🔂" : "🔁"}
+              </button>
+            </div>
+
+            <div style={{ flex: 1 }} />
+
+            <div
+              style={{
+                textAlign: "center",
+                opacity: 0.55,
+                fontSize: 12,
+                paddingBottom: 10,
+              }}
+            >
+              Нажми ✕ или тап по фону чтобы закрыть
+            </div>
+          </div>
         </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 12,
-            opacity: 0.75,
-            marginTop: 8,
-          }}
-        >
-          <span>{formatTime(pos)}</span>
-          <span>{formatTime(dur)}</span>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div
-        style={{
-          marginTop: 22,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-        }}
-      >
-        <button
-          onClick={() => setShuffle((s) => !s)}
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: shuffle
-              ? "rgba(59,130,246,0.22)"
-              : "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontWeight: 900,
-            cursor: "pointer",
-          }}
-          title="Shuffle"
-          aria-label="Shuffle"
-        >
-          🔀
-        </button>
-
-        <button
-          onClick={prevTrack}
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontWeight: 900,
-            cursor: "pointer",
-            fontSize: 18,
-          }}
-          aria-label="Prev"
-        >
-          ⏮
-        </button>
-
-        <button
-          onClick={togglePlay}
-          style={{
-            width: 86,
-            height: 86,
-            borderRadius: 999,
-            border: "none",
-            background: "rgba(59,130,246,0.95)",
-            color: "#000",
-            fontWeight: 900,
-            cursor: "pointer",
-            boxShadow: "0 12px 40px rgba(59,130,246,0.28)",
-            fontSize: 22,
-          }}
-          aria-label="Play pause"
-        >
-          {isPlaying ? "❚❚" : "▶"}
-        </button>
-
-        <button
-          onClick={nextTrack}
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontWeight: 900,
-            cursor: "pointer",
-            fontSize: 18,
-          }}
-          aria-label="Next"
-        >
-          ⏭
-        </button>
-
-        <button
-          onClick={() =>
-            setRepeatMode((m) => (m === "off" ? "all" : m === "all" ? "one" : "off"))
-          }
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background:
-              repeatMode !== "off"
-                ? "rgba(59,130,246,0.22)"
-                : "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontWeight: 900,
-            cursor: "pointer",
-          }}
-          title="Repeat"
-          aria-label="Repeat"
-        >
-          {repeatMode === "one" ? "🔂" : "🔁"}
-        </button>
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      <div
-        style={{
-          textAlign: "center",
-          opacity: 0.55,
-          fontSize: 12,
-          paddingBottom: 10,
-        }}
-      >
-        Нажми ✕ или тап по фону чтобы закрыть
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Bottom Tabs */}
       <div
@@ -1290,7 +1324,6 @@ function TrackList({
                   flex: "0 0 auto",
                 }}
               />
-
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
