@@ -26,6 +26,12 @@ export default function Home() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
+  type Playlist = { id: string; name: string };
+
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [playlistTrackIds, setPlaylistTrackIds] = useState<Set<string>>(new Set());
+  const [newPlaylistName, setNewPlaylistName] = useState("");
 
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const currentTrack = useMemo(
@@ -118,6 +124,23 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  fetchPlaylists()
+  useEffect(() => {
+  if (!userId) return;
+  fetchFavorites();
+  fetchPlaylists();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [userId]);
+
+useEffect(() => {
+  if (!activePlaylistId) {
+    setPlaylistTrackIds(new Set());
+    return;
+  }
+  fetchPlaylistTracks(activePlaylistId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activePlaylistId]);
+
   async function fetchFavorites() {
     const { data, error } = await supabase
       .from("favorites")
@@ -132,6 +155,74 @@ export default function Home() {
 
     setFavIds(new Set((data ?? []).map((r: any) => String(r.track_id))));
   }
+
+  async function fetchPlaylists() {
+  if (!userId) return;
+
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("id,name")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("SUPABASE playlists error:", error);
+    setPlaylists([]);
+    return;
+  }
+
+  setPlaylists((data ?? []).map((p: any) => ({ id: String(p.id), name: p.name })));
+}
+
+async function createPlaylist() {
+  const name = newPlaylistName.trim();
+  if (!userId || !name) return;
+
+  const { data, error } = await supabase
+    .from("playlists")
+    .insert({ user_id: userId, name })
+    .select("id,name")
+    .single();
+
+  if (error) {
+    console.error("create playlist error:", error);
+    return;
+  }
+
+  setNewPlaylistName("");
+  await fetchPlaylists();
+  setActivePlaylistId(String(data.id));
+}
+
+async function fetchPlaylistTracks(playlistId: string) {
+  const { data, error } = await supabase
+    .from("playlist_tracks")
+    .select("track_id")
+    .eq("playlist_id", playlistId);
+
+  if (error) {
+    console.error("playlist_tracks error:", error);
+    setPlaylistTrackIds(new Set());
+    return;
+  }
+
+  setPlaylistTrackIds(new Set((data ?? []).map((r: any) => String(r.track_id))));
+}
+
+async function removeFromPlaylist(playlistId: string, trackId: string) {
+  const { error } = await supabase
+    .from("playlist_tracks")
+    .delete()
+    .eq("playlist_id", playlistId)
+    .eq("track_id", trackId);
+
+  if (error) {
+    console.error("removeFromPlaylist error:", error);
+    return;
+  }
+
+  await fetchPlaylistTracks(playlistId);
+}
 
   // lists
   const filteredTracks = useMemo(() => {
@@ -442,12 +533,133 @@ function closePlayer() {
               </div>
               <div>
                 <b>Repeat:</b> {repeatMode}
-              </div>
-            </div>
-          </div>
-        )}
+                <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.10)" }}>
+  <div style={{ fontSize: 16, fontWeight: 900 }}>Playlists</div>
+
+  {/* create */}
+  <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+    <input
+      value={newPlaylistName}
+      onChange={(e) => setNewPlaylistName(e.target.value)}
+      placeholder="Новый плейлист…"
+      style={{
+        flex: 1,
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        outline: "none",
+      }}
+    />
+    <button
+      onClick={createPlaylist}
+      style={{
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "none",
+        background: "rgba(59,130,246,0.95)",
+        color: "#000",
+        fontWeight: 900,
+        cursor: "pointer",
+      }}
+    >
+      + Create
+    </button>
+  </div>
+
+  {/* list */}
+  <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+    {playlists.length === 0 ? (
+      <div style={{ opacity: 0.75 }}>Плейлистов пока нет.</div>
+    ) : (
+      playlists.map((p) => (
+        <button
+          key={p.id}
+          onClick={() => setActivePlaylistId(p.id)}
+          style={{
+            textAlign: "left",
+            padding: 12,
+            borderRadius: 16,
+            border:
+              activePlaylistId === p.id
+                ? "1px solid rgba(59,130,246,0.55)"
+                : "1px solid rgba(255,255,255,0.08)",
+            background:
+              activePlaylistId === p.id
+                ? "rgba(59,130,246,0.10)"
+                : "rgba(255,255,255,0.04)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          {p.name}
+        </button>
+      ))
+    )}
+  </div>
+
+  {/* tracks inside */}
+  {activePlaylistId && (
+    <div style={{ marginTop: 16 }}>
+      <div style={{ fontWeight: 900, marginBottom: 10, opacity: 0.9 }}>
+        Tracks in playlist
       </div>
 
+      {tracks.filter((t) => playlistTrackIds.has(t.id)).length === 0 ? (
+        <div style={{ opacity: 0.75 }}>
+          Пусто. Добавление треков сделаем следующим шагом.
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {tracks
+            .filter((t) => playlistTrackIds.has(t.id))
+            .map((t) => (
+              <div
+                key={t.id}
+                style={{
+                  padding: 12,
+                  borderRadius: 18,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <button
+                  onClick={() => playTrackById(t.id)}
+                  style={{ all: "unset", cursor: "pointer", flex: 1, minWidth: 0 }}
+                >
+                  <div style={{ fontWeight: 900 }}>{t.title}</div>
+                  <div style={{ opacity: 0.7, fontSize: 13 }}>{t.artist}</div>
+                </button>
+
+                <button
+                  onClick={() => removeFromPlaylist(activePlaylistId, t.id)}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                  title="Remove"
+                >
+                  −
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )}
+</div>
+       
       {/* Hidden audio */}
       {currentTrack && (
         <audio
