@@ -263,6 +263,30 @@ export default function Home() {
       return;
     }
 
+    async function addToPlaylist(playlistId: string, trackId: string) {
+  if (!playlistId) return;
+
+  const { error } = await supabase.from("playlist_tracks").insert({
+    playlist_id: playlistId,
+    track_id: trackId,
+  });
+
+  // Если запись уже существует — Supabase может ругаться.
+  // Тогда просто игнорируем эту ошибку.
+  if (error) {
+    // частая ошибка: duplicate key value violates unique constraint
+    const msg = (error as any)?.message ?? "";
+    if (msg.toLowerCase().includes("duplicate")) {
+      // уже есть — ок
+    } else {
+      console.error("addToPlaylist error:", error);
+      return;
+    }
+  }
+
+  await fetchPlaylistTracks(playlistId);
+}
+
     await fetchPlaylistTracks(playlistId);
   }
 
@@ -484,25 +508,41 @@ export default function Home() {
       {/* Content */}
       <div style={{ padding: "0 20px" }}>
         {tab === "home" && (
-          <TrackList
-            tracks={filteredTracks}
-            currentTrackId={currentTrackId}
-            favIds={favIds}
-            onPlay={(id) => playTrackById(id)}
-            onToggleFav={(id) => toggleFavorite(id)}
-          />
+         <TrackList
+  tracks={filteredTracks}
+  currentTrackId={currentTrackId}
+  favIds={favIds}
+  onPlay={(id) => playTrackById(id)}
+  onToggleFav={(id) => toggleFavorite(id)}
+  activePlaylistId={activePlaylistId}
+  playlistTrackIds={playlistTrackIds}
+  onAddToPlaylist={(trackId) =>
+    activePlaylistId && addToPlaylist(activePlaylistId, trackId)
+  }
+  onRemoveFromPlaylist={(trackId) =>
+    activePlaylistId && removeFromPlaylist(activePlaylistId, trackId)
+  }
+/>
         )}
 
         {tab === "favorites" && (
           <>
             <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
             <TrackList
-              tracks={favoriteTracks}
-              currentTrackId={currentTrackId}
-              favIds={favIds}
-              onPlay={(id) => playTrackById(id)}
-              onToggleFav={(id) => toggleFavorite(id)}
-            />
+  tracks={filteredTracks}
+  currentTrackId={currentTrackId}
+  favIds={favIds}
+  onPlay={(id) => playTrackById(id)}
+  onToggleFav={(id) => toggleFavorite(id)}
+  activePlaylistId={activePlaylistId}
+  playlistTrackIds={playlistTrackIds}
+  onAddToPlaylist={(trackId) =>
+    activePlaylistId && addToPlaylist(activePlaylistId, trackId)
+  }
+  onRemoveFromPlaylist={(trackId) =>
+    activePlaylistId && removeFromPlaylist(activePlaylistId, trackId)
+  }
+/>
           </>
         )}
 
@@ -1267,12 +1307,21 @@ function TrackList({
   favIds,
   onPlay,
   onToggleFav,
+  activePlaylistId,
+  playlistTrackIds,
+  onAddToPlaylist,
+  onRemoveFromPlaylist,
 }: {
   tracks: Track[];
   currentTrackId: string | null;
   favIds: Set<string>;
   onPlay: (id: string) => void;
   onToggleFav: (id: string) => void;
+
+  activePlaylistId: string | null;
+  playlistTrackIds: Set<string>;
+  onAddToPlaylist: (trackId: string) => void;
+  onRemoveFromPlaylist: (trackId: string) => void;
 }) {
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
@@ -1283,6 +1332,8 @@ function TrackList({
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id;
         const isFav = favIds.has(t.id);
+        const canPlaylist = !!activePlaylistId;
+        const inPlaylist = playlistTrackIds.has(t.id);
 
         return (
           <div
@@ -1298,9 +1349,10 @@ function TrackList({
                 : "rgba(255,255,255,0.05)",
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: 10,
             }}
           >
+            {/* play area */}
             <button
               onClick={() => onPlay(t.id)}
               style={{
@@ -1351,6 +1403,42 @@ function TrackList({
               </div>
             </button>
 
+            {/* add/remove to playlist */}
+            <button
+              onClick={() => {
+                if (!canPlaylist) return;
+                if (inPlaylist) onRemoveFromPlaylist(t.id);
+                else onAddToPlaylist(t.id);
+              }}
+              disabled={!canPlaylist}
+              title={
+                !canPlaylist
+                  ? "Выбери плейлист в Profile"
+                  : inPlaylist
+                  ? "Убрать из плейлиста"
+                  : "Добавить в плейлист"
+              }
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: !canPlaylist
+                  ? "rgba(255,255,255,0.03)"
+                  : inPlaylist
+                  ? "rgba(59,130,246,0.20)"
+                  : "rgba(255,255,255,0.06)",
+                color: !canPlaylist ? "rgba(255,255,255,0.35)" : "#fff",
+                fontWeight: 900,
+                cursor: !canPlaylist ? "not-allowed" : "pointer",
+                flex: "0 0 auto",
+              }}
+              aria-label="playlist"
+            >
+              {!canPlaylist ? "＋" : inPlaylist ? "✓" : "＋"}
+            </button>
+
+            {/* favorite */}
             <button
               onClick={() => onToggleFav(t.id)}
               style={{
