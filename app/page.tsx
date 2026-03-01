@@ -23,6 +23,7 @@ function formatTime(sec: number) {
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
 
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
 
@@ -159,11 +160,24 @@ export default function Home() {
 
   function playTrackById(id: string) {
   setCurrentTrackId(id);
-  setIsPlaying(false); // важно: новый трек выбран, но не играет
+
+  // пользователь выбрал трек => считаем что было взаимодействие
+  setHasInteracted(true);
+
   setTimeout(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.load(); // подгружаем трек, но НЕ запускаем
+
+    audio.load();
+
+    // Вариант A: после взаимодействия — сразу проигрываем
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch((e) => {
+        console.log("play blocked:", e);
+        setIsPlaying(false);
+      });
   }, 50);
 }
 
