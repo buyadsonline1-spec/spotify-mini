@@ -1301,17 +1301,6 @@ function TrackList({
   onToggleFav: (id: string) => void;
   onOpenPlaylistMenu: (track: Track) => void;
 }) {
-  tracks: Track[];
-  currentTrackId: string | null;
-  favIds: Set<string>;
-  onPlay: (id: string) => void;
-  onToggleFav: (id: string) => void;
-
-  activePlaylistId: string | null;
-  playlistTrackIds: Set<string>;
-  onAddToPlaylist: (trackId: string) => void;
-  onRemoveFromPlaylist: (trackId: string) => void;
-}) {
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
   }
@@ -1320,18 +1309,17 @@ function TrackList({
     <div style={{ display: "grid", gap: 10 }}>
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id;
+        const isFav = favIds.has(t.id);
+
         let pressTimer: any = null;
 
-function startPress() {
-  pressTimer = setTimeout(() => onOpenPlaylistMenu(t), 420);
-}
+        function startPress() {
+          pressTimer = setTimeout(() => onOpenPlaylistMenu(t), 420);
+        }
 
-function endPress() {
-  if (pressTimer) clearTimeout(pressTimer);
-}
-        const isFav = favIds.has(t.id);
-        const canPlaylist = !!activePlaylistId;
-        const inPlaylist = playlistTrackIds.has(t.id);
+        function endPress() {
+          if (pressTimer) clearTimeout(pressTimer);
+        }
 
         return (
           <div
@@ -1347,22 +1335,21 @@ function endPress() {
                 : "rgba(255,255,255,0.05)",
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: 12,
             }}
           >
-            {/* play area */}
             <button
-            onContextMenu={(e) => {
-  e.preventDefault();
-  onOpenPlaylistMenu(t);
-}}
-onTouchStart={startPress}
-onTouchEnd={endPress}
-onTouchCancel={endPress}
-onMouseDown={startPress}
-onMouseUp={endPress}
-onMouseLeave={endPress}
               onClick={() => onPlay(t.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onOpenPlaylistMenu(t);
+              }}
+              onTouchStart={startPress}
+              onTouchEnd={endPress}
+              onTouchCancel={endPress}
+              onMouseDown={startPress}
+              onMouseUp={endPress}
+              onMouseLeave={endPress}
               style={{
                 all: "unset",
                 cursor: "pointer",
@@ -1384,6 +1371,7 @@ onMouseLeave={endPress}
                   flex: "0 0 auto",
                 }}
               />
+
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
@@ -1411,42 +1399,6 @@ onMouseLeave={endPress}
               </div>
             </button>
 
-            {/* add/remove to playlist */}
-            <button
-              onClick={() => {
-                if (!canPlaylist) return;
-                if (inPlaylist) onRemoveFromPlaylist(t.id);
-                else onAddToPlaylist(t.id);
-              }}
-              disabled={!canPlaylist}
-              title={
-                !canPlaylist
-                  ? "Выбери плейлист в Profile"
-                  : inPlaylist
-                  ? "Убрать из плейлиста"
-                  : "Добавить в плейлист"
-              }
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: !canPlaylist
-                  ? "rgba(255,255,255,0.03)"
-                  : inPlaylist
-                  ? "rgba(59,130,246,0.20)"
-                  : "rgba(255,255,255,0.06)",
-                color: !canPlaylist ? "rgba(255,255,255,0.35)" : "#fff",
-                fontWeight: 900,
-                cursor: !canPlaylist ? "not-allowed" : "pointer",
-                flex: "0 0 auto",
-              }}
-              aria-label="playlist"
-            >
-              {!canPlaylist ? "＋" : inPlaylist ? "✓" : "＋"}
-            </button>
-
-            {/* favorite */}
             <button
               onClick={() => onToggleFav(t.id)}
               style={{
