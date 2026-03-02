@@ -508,44 +508,29 @@ export default function Home() {
       {/* Content */}
       <div style={{ padding: "0 20px" }}>
         {tab === "home" && (
-         <TrackList
-  tracks={filteredTracks}
-  currentTrackId={currentTrackId}
-  favIds={favIds}
-  onPlay={(id) => playTrackById(id)}
-  onToggleFav={(id) => toggleFavorite(id)}
-  activePlaylistId={activePlaylistId}
-  playlistTrackIds={playlistTrackIds}
-  onAddToPlaylist={(trackId) =>
-    activePlaylistId && addToPlaylist(activePlaylistId, trackId)
-  }
-  onRemoveFromPlaylist={(trackId) =>
-    activePlaylistId && removeFromPlaylist(activePlaylistId, trackId)
-  }
-/>
-        )}
+  <TrackList
+    tracks={filteredTracks}
+    currentTrackId={currentTrackId}
+    favIds={favIds}
+    onPlay={(id) => playTrackById(id)}
+    onToggleFav={(id) => toggleFavorite(id)}
+    onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+  />
+)}
 
-        {tab === "favorites" && (
-          <>
-            <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
-            <TrackList
-  tracks={filteredTracks}
-  currentTrackId={currentTrackId}
-  favIds={favIds}
-  onPlay={(id) => playTrackById(id)}
-  onToggleFav={(id) => toggleFavorite(id)}
-  activePlaylistId={activePlaylistId}
-  playlistTrackIds={playlistTrackIds}
-  onAddToPlaylist={(trackId) =>
-    activePlaylistId && addToPlaylist(activePlaylistId, trackId)
-  }
-  onRemoveFromPlaylist={(trackId) =>
-    activePlaylistId && removeFromPlaylist(activePlaylistId, trackId)
-  }
-/>
-          </>
-        )}
-
+ {tab === "favorites" && (
+  <>
+    <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
+    <TrackList
+      tracks={favoriteTracks}
+      currentTrackId={currentTrackId}
+      favIds={favIds}
+      onPlay={(id) => playTrackById(id)}
+      onToggleFav={(id) => toggleFavorite(id)}
+      onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+    />
+  </>
+)}
         {tab === "profile" && (
           <div
             style={{
@@ -1307,11 +1292,15 @@ function TrackList({
   favIds,
   onPlay,
   onToggleFav,
-  activePlaylistId,
-  playlistTrackIds,
-  onAddToPlaylist,
-  onRemoveFromPlaylist,
+  onOpenPlaylistMenu,
 }: {
+  tracks: Track[];
+  currentTrackId: string | null;
+  favIds: Set<string>;
+  onPlay: (id: string) => void;
+  onToggleFav: (id: string) => void;
+  onOpenPlaylistMenu: (track: Track) => void;
+}) {
   tracks: Track[];
   currentTrackId: string | null;
   favIds: Set<string>;
@@ -1331,6 +1320,15 @@ function TrackList({
     <div style={{ display: "grid", gap: 10 }}>
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id;
+        let pressTimer: any = null;
+
+function startPress() {
+  pressTimer = setTimeout(() => onOpenPlaylistMenu(t), 420);
+}
+
+function endPress() {
+  if (pressTimer) clearTimeout(pressTimer);
+}
         const isFav = favIds.has(t.id);
         const canPlaylist = !!activePlaylistId;
         const inPlaylist = playlistTrackIds.has(t.id);
@@ -1354,6 +1352,16 @@ function TrackList({
           >
             {/* play area */}
             <button
+            onContextMenu={(e) => {
+  e.preventDefault();
+  onOpenPlaylistMenu(t);
+}}
+onTouchStart={startPress}
+onTouchEnd={endPress}
+onTouchCancel={endPress}
+onMouseDown={startPress}
+onMouseUp={endPress}
+onMouseLeave={endPress}
               onClick={() => onPlay(t.id)}
               style={{
                 all: "unset",
