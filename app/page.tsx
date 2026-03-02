@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 type Tab = "home" | "favorites" | "profile";
 
@@ -100,6 +100,7 @@ export default function Home() {
   }, []);
 
   async function fetchTracks() {
+    const supabase = getSupabase();
     const { data, error } = await supabase.from("tracks").select("*");
 
     if (error) {
@@ -132,6 +133,7 @@ export default function Home() {
   }, [userId]);
 
   async function fetchFavorites() {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("favorites")
       .select("track_id")
@@ -160,6 +162,7 @@ export default function Home() {
     });
 
     if (isFav) {
+      const supabase = getSupabase();
       const { error } = await supabase
         .from("favorites")
         .delete()
@@ -171,6 +174,7 @@ export default function Home() {
         setFavIds((prev) => new Set(prev).add(trackId)); // rollback
       }
     } else {
+      const supabase = getSupabase();
       const { error } = await supabase.from("favorites").insert({
         user_id: userId,
         track_id: trackId,
@@ -191,6 +195,7 @@ export default function Home() {
     if (!userId) return;
 
     // если у тебя НЕТ created_at, просто убери order (ниже уже безопасно без него)
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("playlists")
       .select("id,name")
@@ -210,7 +215,7 @@ export default function Home() {
   async function createPlaylist() {
     const name = newPlaylistName.trim();
     if (!userId || !name) return;
-
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("playlists")
       .insert({ user_id: userId, name })
@@ -237,6 +242,7 @@ export default function Home() {
   }, [activePlaylistId]);
 
   async function fetchPlaylistTracks(playlistId: string) {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("playlist_tracks")
       .select("track_id")
@@ -254,6 +260,7 @@ export default function Home() {
   }
 
   async function removeFromPlaylist(playlistId: string, trackId: string) {
+    const supabase = getSupabase();
     const { error } = await supabase
       .from("playlist_tracks")
       .delete()
