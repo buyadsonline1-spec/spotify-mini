@@ -60,6 +60,8 @@ export default function Home() {
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   // playlists (only in profile)
+  const [playlistMenuOpen, setPlaylistMenuOpen] = useState(false);
+  const [playlistMenuTrack, setPlaylistMenuTrack] = useState<Track | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [playlistTrackIds, setPlaylistTrackIds] = useState<Set<string>>(
@@ -429,6 +431,16 @@ export default function Home() {
   function closePlayer() {
     setPlayerClosing(true);
     setTimeout(() => setPlayerMounted(false), 260);
+  }
+
+  function openPlaylistMenu(track: Track) {
+  setPlaylistMenuTrack(track);
+  setPlaylistMenuOpen(true);
+  }
+
+  function closePlaylistMenu() {
+  setPlaylistMenuOpen(false);
+  setPlaylistMenuTrack(null);
   }
 
   // --- UI constants ---
