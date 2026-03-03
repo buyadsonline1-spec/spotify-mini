@@ -27,6 +27,28 @@ export default function Home() {
 
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
+  const [playsCount, setPlaysCount] = useState(0);
+  const [plan, setPlan] = useState<"free" | "unlimited">("free");
+  // --- persist playsCount + plan ---
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const savedPlays = localStorage.getItem("pokoro_plays_count");
+  const savedPlan = localStorage.getItem("pokoro_plan");
+
+  if (savedPlays) setPlaysCount(Number(savedPlays) || 0);
+  if (savedPlan === "free" || savedPlan === "unlimited") setPlan(savedPlan);
+}, []);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("pokoro_plays_count", String(playsCount));
+}, [playsCount]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("pokoro_plan", plan);
+}, [plan]);
 
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const currentTrack = useMemo(
@@ -340,6 +362,8 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
 
   function playTrackById(id: string) {
     // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
+    setPlaysCount((c) => c + 1);
+    setPlaysCount((c) => c + 1);
     setCurrentTrackId(id);
     setTimeout(() => {
       const audio = audioRef.current;
@@ -620,27 +644,45 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
           >
             <div style={{ fontSize: 16, fontWeight: 900 }}>Profile</div>
 
-            <div style={{ marginTop: 12, opacity: 0.85, lineHeight: 1.7 }}>
-              <div>
-                <b>Имя:</b> {user?.first_name ?? "Гость"}
-              </div>
-              <div>
-                <b>Username:</b>{" "}
-                {user?.username ? `@${user.username}` : "нет"}
-              </div>
-              <div>
-                <b>User ID:</b> {userId || "…"}
-              </div>
-              <div>
-                <b>Избранное:</b> {favIds.size}
-              </div>
-              <div>
-                <b>Shuffle:</b> {shuffle ? "on" : "off"}
-              </div>
-              <div>
-                <b>Repeat:</b> {repeatMode}
-              </div>
-            </div>
+            <div style={{ marginTop: 12, opacity: 0.9, lineHeight: 1.7 }}>
+  <div>
+    <b>Username:</b> {user?.username ? `@${user.username}` : "нет"}
+  </div>
+
+  <div>
+    <b>Прослушано:</b> {playsCount}
+  </div>
+
+  <div style={{ marginTop: 10 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div>
+        <b>Подписка:</b> {plan === "unlimited" ? "Unlimited" : "Free"}
+      </div>
+
+      <button
+        onClick={() => setPlan("unlimited")}
+        style={{
+          padding: "10px 14px",
+          borderRadius: 14,
+          border: "none",
+          background: "rgba(59,130,246,0.95)",
+          color: "#000",
+          fontWeight: 900,
+          cursor: "pointer",
+          boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
+        }}
+      >
+        Без ограничений
+      </button>
+    </div>
+
+    <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
+      {plan === "unlimited"
+        ? "Спасибо! У тебя полный доступ 💙"
+        : "Free: ограничения по функционалу (скоро добавим оплату)."}
+    </div>
+  </div>
+</div>
 
             {/* Playlists only in profile */}
             <div
