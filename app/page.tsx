@@ -259,35 +259,19 @@ export default function Home() {
     );
   }
 
-  async function removeFromPlaylist(playlistId: string, trackId: string) {
-    const supabase = getSupabase();
-    const { error } = await supabase
-      .from("playlist_tracks")
-      .delete()
-      .eq("playlist_id", playlistId)
-      .eq("track_id", trackId);
-
-    if (error) {
-      console.error("removeFromPlaylist error:", error);
-      return;
-    }
-
-    async function addToPlaylist(playlistId: string, trackId: string) {
+async function addToPlaylist(playlistId: string, trackId: string) {
   if (!playlistId) return;
 
+  const supabase = getSupabase();
   const { error } = await supabase.from("playlist_tracks").insert({
     playlist_id: playlistId,
     track_id: trackId,
   });
 
-  // Если запись уже существует — Supabase может ругаться.
-  // Тогда просто игнорируем эту ошибку.
+
   if (error) {
-    // частая ошибка: duplicate key value violates unique constraint
-    const msg = (error as any)?.message ?? "";
-    if (msg.toLowerCase().includes("duplicate")) {
-      // уже есть — ок
-    } else {
+     const msg = (error as any)?.message ?? "";
+    if (!msg.toLowerCase().includes("duplicate")) {
       console.error("addToPlaylist error:", error);
       return;
     }
@@ -296,8 +280,21 @@ export default function Home() {
   await fetchPlaylistTracks(playlistId);
 }
 
-    await fetchPlaylistTracks(playlistId);
+async function removeFromPlaylist(playlistId: string, trackId: string) {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("playlist_tracks")
+    .delete()
+    .eq("playlist_id", playlistId)
+    .eq("track_id", trackId);
+
+  if (error) {
+    console.error("removeFromPlaylist error:", error);
+    return;
   }
+
+  await fetchPlaylistTracks(playlistId);
+}
 
   // --- lists ---
   const filteredTracks = useMemo(() => {
@@ -1233,6 +1230,83 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Playlist menu modal */}
+{playlistMenuOpen && playlistMenuTrack && (
+  <div
+    onClick={closePlaylistMenu}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 60,
+      background: "rgba(0,0,0,0.55)",
+      display: "flex",
+      alignItems: "flex-end",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        padding: 16,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        background: "rgba(7,10,18,0.98)",
+        borderTop: "1px solid rgba(255,255,255,0.10)",
+      }}
+    >
+      <div style={{ fontWeight: 900, marginBottom: 10 }}>
+        Добавить в плейлист
+      </div>
+
+      {playlists.length === 0 ? (
+        <div style={{ opacity: 0.75 }}>Сначала создай плейлист в Profile.</div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {playlists.map((p) => (
+            <button
+              key={p.id}
+              onClick={async () => {
+                await addToPlaylist(p.id, playlistMenuTrack.id);
+                setActivePlaylistId(p.id);
+                closePlaylistMenu();
+              }}
+              style={{
+                textAlign: "left",
+                padding: 12,
+                borderRadius: 16,
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={closePlaylistMenu}
+        style={{
+          marginTop: 12,
+          width: "100%",
+          padding: 12,
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.12)",
+          background: "transparent",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        Закрыть
+      </button>
+    </div>
+  </div>
+)}
 
       {/* Bottom Tabs */}
       <div
