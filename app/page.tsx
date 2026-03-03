@@ -447,6 +447,68 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
   setPlaylistMenuTrack(null);
   }
 
+    // --- UI helpers (beautiful buttons) ---
+  const UI = {
+    blue: "rgba(59,130,246,0.95)",
+    blueSoft: "rgba(59,130,246,0.18)",
+    whiteSoft: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    text: "#fff",
+    black: "#070A12",
+    shadow: "0 12px 40px rgba(59,130,246,0.25)",
+  };
+
+  const btnBase: React.CSSProperties = {
+    border: UI.border,
+    background: UI.whiteSoft,
+    color: UI.text,
+    fontWeight: 900,
+    cursor: "pointer",
+    borderRadius: 16,
+    padding: "12px 14px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    transition: "transform 120ms ease, background 160ms ease, border-color 160ms ease",
+    userSelect: "none",
+    WebkitTapHighlightColor: "transparent",
+  };
+
+  const btnPrimary: React.CSSProperties = {
+    ...btnBase,
+    border: "none",
+    background: UI.blue,
+    color: "#001018",
+    boxShadow: UI.shadow,
+  };
+
+  const iconBtnBase: React.CSSProperties = {
+    width: 46,
+    height: 46,
+    borderRadius: 999,
+    border: UI.border,
+    background: UI.whiteSoft,
+    color: UI.text,
+    fontWeight: 900,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "transform 120ms ease, background 160ms ease, border-color 160ms ease",
+    userSelect: "none",
+    WebkitTapHighlightColor: "transparent",
+  };
+
+  const iconBtnPrimary: React.CSSProperties = {
+    ...iconBtnBase,
+    width: 56,
+    height: 56,
+    border: "none",
+    background: UI.blue,
+    color: "#001018",
+    boxShadow: UI.shadow,
+  };
+
   // --- UI constants ---
   const bg =
     "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
@@ -606,20 +668,9 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
                     outline: "none",
                   }}
                 />
-                <button
-                  onClick={createPlaylist}
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: 16,
-                    border: "none",
-                    background: "rgba(59,130,246,0.95)",
-                    color: "#000",
-                    fontWeight: 900,
-                    cursor: "pointer",
-                  }}
-                >
-                  + Create
-                </button>
+               <Btn variant="primary" onClick={createPlaylist}>
+  + Create
+</Btn>
               </div>
 
               {/* list */}
@@ -861,89 +912,28 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
 
             {/* Controls (NO shuffle/repeat here) */}
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevTrack();
-                }}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="prev"
-              >
-                ⏮
-              </button>
+              <IconBtn onClick={(e) => { e.stopPropagation(); prevTrack(); }}>
+  ⏮
+</IconBtn>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePlay();
-                }}
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 999,
-                  border: "none",
-                  background: "rgba(59,130,246,0.95)",
-                  color: "#000",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
-                }}
-                aria-label="toggle play"
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
+              <IconBtn
+  primary
+  onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+  style={{ width: 64, height: 64 }}
+>
+  {isPlaying ? "❚❚" : "▶"}
+</IconBtn>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextTrack();
-                }}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="next"
-              >
-                ⏭
-              </button>
+              <IconBtn onClick={(e) => { e.stopPropagation(); nextTrack(); }}>
+  ⏭
+</IconBtn>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(currentTrack.id);
-                }}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: favIds.has(currentTrack.id)
-                    ? "rgba(59,130,246,0.20)"
-                    : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                aria-label="favorite"
-                title="Like"
-              >
-                {favIds.has(currentTrack.id) ? "♥" : "♡"}
-              </button>
+              <IconBtn
+  active={favIds.has(currentTrack.id)}
+  onClick={(e) => { e.stopPropagation(); toggleFavorite(currentTrack.id); }}
+>
+  {favIds.has(currentTrack.id) ? "♥" : "♡"}
+</IconBtn>
             </div>
           </div>
         </div>
@@ -1114,105 +1104,28 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
                 gap: 10,
               }}
             >
-              <button
-                onClick={() => setShuffle((s) => !s)}
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: shuffle
-                    ? "rgba(59,130,246,0.22)"
-                    : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                title="Shuffle"
-                aria-label="Shuffle"
-              >
-                🔀
-              </button>
+              <IconBtn active={shuffle} onClick={() => setShuffle((s) => !s)}>
+  🔀
+</IconBtn>
 
-              <button
-                onClick={prevTrack}
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  fontSize: 18,
-                }}
-                aria-label="Prev"
-              >
-                ⏮
-              </button>
+              <IconBtn onClick={prevTrack} style={{ width: 62, height: 62 }}>
+  ⏮
+</IconBtn>
 
-              <button
-                onClick={togglePlay}
-                style={{
-                  width: 86,
-                  height: 86,
-                  borderRadius: 999,
-                  border: "none",
-                  background: "rgba(59,130,246,0.95)",
-                  color: "#000",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  boxShadow: "0 12px 40px rgba(59,130,246,0.28)",
-                  fontSize: 22,
-                }}
-                aria-label="Play pause"
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
+              <IconBtn primary onClick={togglePlay} style={{ width: 92, height: 92, fontSize: 22 }}>
+  {isPlaying ? "❚❚" : "▶"}
+</IconBtn>
 
-              <button
-                onClick={nextTrack}
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  fontSize: 18,
-                }}
-                aria-label="Next"
-              >
-                ⏭
-              </button>
+              <IconBtn onClick={nextTrack} style={{ width: 62, height: 62 }}>
+  ⏭
+</IconBtn>
 
-              <button
-                onClick={() =>
-                  setRepeatMode((m) =>
-                    m === "off" ? "all" : m === "all" ? "one" : "off"
-                  )
-                }
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background:
-                    repeatMode !== "off"
-                      ? "rgba(59,130,246,0.22)"
-                      : "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-                title="Repeat"
-                aria-label="Repeat"
-              >
-                {repeatMode === "one" ? "🔂" : "🔁"}
-              </button>
+              <IconBtn
+  active={repeatMode !== "off"}
+  onClick={() => setRepeatMode((m) => (m === "off" ? "all" : m === "all" ? "one" : "off"))}
+>
+  {repeatMode === "one" ? "🔂" : "🔁"}
+</IconBtn>
             </div>
 
             <div style={{ flex: 1 }} />
@@ -1344,6 +1257,119 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
         />
       </div>
     </div>
+  );
+}
+
+function Btn({
+  children,
+  onClick,
+  variant = "ghost",
+  style,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "ghost";
+}) {
+  const base: React.CSSProperties = {
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+    borderRadius: 16,
+    padding: "12px 14px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    transition: "transform 120ms ease, background 160ms ease, border-color 160ms ease",
+    userSelect: "none",
+    WebkitTapHighlightColor: "transparent",
+  };
+
+  const primary: React.CSSProperties = {
+    ...base,
+    border: "none",
+    background: "rgba(59,130,246,0.95)",
+    color: "#001018",
+    boxShadow: "0 12px 40px rgba(59,130,246,0.25)",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...(variant === "primary" ? primary : base),
+        ...style,
+      }}
+      onMouseDown={(e) => {
+        (e.currentTarget.style.transform = "scale(0.98)");
+      }}
+      onMouseUp={(e) => {
+        (e.currentTarget.style.transform = "scale(1)");
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget.style.transform = "scale(1)");
+      }}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
+function IconBtn({
+  children,
+  onClick,
+  active = false,
+  primary = false,
+  style,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  active?: boolean;
+  primary?: boolean;
+}) {
+  const base: React.CSSProperties = {
+    width: primary ? 62 : 46,
+    height: primary ? 62 : 46,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: active ? "rgba(59,130,246,0.20)" : "rgba(255,255,255,0.08)",
+    color: primary ? "#001018" : "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "transform 120ms ease, background 160ms ease, border-color 160ms ease",
+    userSelect: "none",
+    WebkitTapHighlightColor: "transparent",
+  };
+
+  const prim: React.CSSProperties = {
+    ...base,
+    border: "none",
+    background: "rgba(59,130,246,0.95)",
+    boxShadow: "0 12px 40px rgba(59,130,246,0.25)",
+  };
+
+  const s = primary ? prim : base;
+
+  return (
+    <button
+      onClick={onClick}
+      style={{ ...s, ...style }}
+      onMouseDown={(e) => {
+        (e.currentTarget.style.transform = "scale(0.98)");
+      }}
+      onMouseUp={(e) => {
+        (e.currentTarget.style.transform = "scale(1)");
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget.style.transform = "scale(1)");
+      }}
+      {...rest}
+    >
+      {children}
+    </button>
   );
 }
 
