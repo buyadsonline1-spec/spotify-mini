@@ -23,6 +23,26 @@ function formatTime(sec: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function coverBg(cover?: string | null) {
+  if (!cover) return "transparent";
+  return `url(${cover})`;
+}
+
+function bgStyle(cover?: string | null) {
+  // фон: картинка + затемняющие градиенты
+  return {
+    backgroundImage: `
+      radial-gradient(1200px 700px at 20% -10%, rgba(59,130,246,0.35), transparent 60%),
+      radial-gradient(900px 600px at 90% 10%, rgba(0,0,0,0.65), transparent 55%),
+      linear-gradient(to bottom, rgba(7,10,18,0.35), rgba(7,10,18,0.92)),
+      ${cover ? coverBg(cover) : "none"}
+    `,
+    backgroundSize: cover ? "cover" : "auto",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  } as const;
+}
+
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
   const supabase = useMemo(() => {
@@ -552,20 +572,43 @@ if (!supabase) return;
   };
 
   // --- UI constants ---
-  const bg =
-    "radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.28), transparent 60%), #070A12";
+
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        background: bg,
-        color: "#fff",
-        fontFamily:
-          'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
-        paddingBottom: currentTrack ? 160 : 90,
-      }}
-    >
+  style={{
+    minHeight: "100vh",
+    color: "#fff",
+    fontFamily:
+      'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
+    paddingBottom: currentTrack ? 160 : 90,
+
+    // динамический фон от обложки
+    ...bgStyle(currentTrack?.cover_url),
+  }}
+>
+
+  {/* blurred cover layer */}
+{currentTrack?.cover_url && (
+  <div
+    aria-hidden
+    style={{
+      position: "fixed",
+      inset: 0,
+      backgroundImage: coverBg(currentTrack.cover_url),
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      filter: "blur(40px) saturate(1.2)",
+      transform: "scale(1.15)",
+      opacity: 0.35,
+      zIndex: 0,
+      pointerEvents: "none",
+      transition: "opacity 350ms ease",
+    }}
+  />
+)}
+
+<div style={{ position: "relative", zIndex: 1 }}></div>
 
 
 
