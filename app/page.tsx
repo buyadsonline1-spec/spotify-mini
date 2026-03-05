@@ -635,22 +635,8 @@ if (!supabase) return;
 
 
       {/* Header */}
-      <div
-  style={{
-    padding: 20,
-    position: "sticky",
-    top: 0,
-    zIndex: 20,
-
-    // ✅ чтобы контент не просвечивал и не накладывался
-    background: "rgba(7,10,18,0.72)",
-    backdropFilter: "blur(14px)",
-    WebkitBackdropFilter: "blur(14px)",
-
-    // ✅ тонкая граница как в Telegram / iOS
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-  }}
->
+      <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
+        
         <div
           style={{
             display: "flex",
