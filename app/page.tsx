@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
+import { useEffect, useMemo, useRef, useState } from "react";
+
  type Tab = "home" | "favorites" | "profile";
 
 type Track = {
@@ -37,7 +39,7 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
-  const [debug, setDebug] = useState<string>("");
+
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
@@ -154,6 +156,10 @@ useEffect(() => {
   }));
 
   setTracks(normalized);
+
+if (!currentTrackId && normalized.length > 0) {
+    setCurrentTrackId(normalized[0].id);
+  }
 }
   // --- favorites + playlists ---
   useEffect(() => {
@@ -561,20 +567,7 @@ if (!supabase) return;
       }}
     >
 
-      <div
-  style={{
-    margin: "0 20px 12px",
-    padding: 10,
-    borderRadius: 12,
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.10)",
-    fontSize: 12,
-    opacity: 0.85,
-    whiteSpace: "pre-wrap",
-  }}
->
-  DEBUG: {debug || "—"}
-</div>
+
 
       {/* Header */}
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
