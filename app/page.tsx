@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-
-const sb = createClient(supabaseUrl, supabaseAnonKey);
-
-type Tab = "home" | "favorites" | "profile";
+ type Tab = "home" | "favorites" | "profile";
 
 type Track = {
   id: string;
@@ -28,6 +23,19 @@ function formatTime(sec: number) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
+  const supabase = useMemo(() => {
+  if (typeof window === "undefined") return null;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    console.error("Supabase env missing");
+    return null;
+  }
+
+  return createClient(url, key);
+}, []);
 
   const [debug, setDebug] = useState<string>("");
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -127,20 +135,17 @@ useEffect(() => {
   }, []);
 
  async function fetchTracks() {
-  setDebug("fetchTracks: start");
+  if (!supabase) return;
 
-  const { data, error } = await sb.from("tracks").select("*");
+  const { data, error } = await supabase.from("tracks").select("*");
 
   if (error) {
-    console.error("SUPABASE tracks error:", error);
-    setDebug("fetchTracks ERROR: " + JSON.stringify(error));
+     console.error("SUPABASE tracks error:", error);
     setTracks([]);
     return;
   }
 
-  setDebug("fetchTracks OK. rows=" + (data?.length ?? 0));
-
-  const normalized: Track[] = (data ?? []).map((t: any) => ({
+ const normalized: Track[] = (data ?? []).map((t: any) => ({
     id: String(t.id),
     title: t.title ?? "Unknown title",
     artist: t.artist ?? "Unknown artist",
@@ -149,12 +154,7 @@ useEffect(() => {
   }));
 
   setTracks(normalized);
-
-  if (!currentTrackId && normalized.length > 0) {
-    setCurrentTrackId(normalized[0].id);
-  }
 }
-
   // --- favorites + playlists ---
   useEffect(() => {
     if (!userId) return;
@@ -164,7 +164,8 @@ useEffect(() => {
   }, [userId]);
 
   async function fetchFavorites() {
-    const { data, error } = await sb
+    if (!supabase) return;
+    const { data, error } = await supabase
       .from("favorites")
       .select("track_id")
       .eq("user_id", userId);
@@ -192,7 +193,8 @@ useEffect(() => {
     });
 
     if (isFav) {
-      const { error } = await sb
+      if (!supabase) return;
+      const { error } = await supabase
         .from("favorites")
         .delete()
         .eq("user_id", userId)
@@ -203,7 +205,9 @@ useEffect(() => {
         setFavIds((prev) => new Set(prev).add(trackId)); // rollback
       }
     } else {
-      const { error } = await sb.from("favorites").insert({
+
+      if (!supabase) return;
+      const { error } = await supabase.from("favorites").insert({
         user_id: userId,
         track_id: trackId,
       });
@@ -223,7 +227,8 @@ useEffect(() => {
     if (!userId) return;
 
     // если у тебя НЕТ created_at, просто убери order (ниже уже безопасно без него)
-    const { data, error } = await sb
+    if (!supabase) return;
+    const { data, error } = await supabase
       .from("playlists")
       .select("id,name")
       .eq("user_id", userId);
@@ -242,7 +247,9 @@ useEffect(() => {
   async function createPlaylist() {
     const name = newPlaylistName.trim();
     if (!userId || !name) return;
-    const { data, error } = await sb
+
+    if (!supabase) return;
+    const { data, error } = await supabase
       .from("playlists")
       .insert({ user_id: userId, name })
       .select("id,name")
@@ -268,7 +275,9 @@ useEffect(() => {
   }, [activePlaylistId]);
 
   async function fetchPlaylistTracks(playlistId: string) {
-    const { data, error } = await sb
+
+    if (!supabase) return;
+    const { data, error } = await supabase
       .from("playlist_tracks")
       .select("track_id")
       .eq("playlist_id", playlistId);
@@ -287,7 +296,8 @@ useEffect(() => {
 async function addToPlaylist(playlistId: string, trackId: string) {
   if (!playlistId) return;
 
-  const { error } = await sb.from("playlist_tracks").insert({
+if (!supabase) return;
+  const { error } = await supabase.from("playlist_tracks").insert({
     playlist_id: playlistId,
     track_id: trackId,
   });
@@ -305,7 +315,8 @@ async function addToPlaylist(playlistId: string, trackId: string) {
 }
 
 async function removeFromPlaylist(playlistId: string, trackId: string) {
-  const { error } = await sb
+if (!supabase) return;
+  const { error } = await supabase
     .from("playlist_tracks")
     .delete()
     .eq("playlist_id", playlistId)
