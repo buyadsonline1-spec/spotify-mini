@@ -575,41 +575,63 @@ if (!supabase) return;
 
 
   return (
-    <div
-  style={{
-    minHeight: "100vh",
-    color: "#fff",
-    fontFamily:
-      'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
-    paddingBottom: currentTrack ? 160 : 90,
-
-    // динамический фон от обложки
-    ...bgStyle(currentTrack?.cover_url),
-  }}
->
-
-  {/* blurred cover layer */}
-{currentTrack?.cover_url && (
   <div
-    aria-hidden
     style={{
-      position: "fixed",
-      inset: 0,
-      backgroundImage: coverBg(currentTrack.cover_url),
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      filter: "blur(40px) saturate(1.2)",
-      transform: "scale(1.15)",
-      opacity: 0.35,
-      zIndex: 0,
-      pointerEvents: "none",
-      transition: "opacity 350ms ease",
+      minHeight: "100vh",
+      color: "#fff",
+      fontFamily:
+        'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
+      paddingBottom: currentTrack ? 160 : 90,
+
+      // базовый фон на всякий случай
+      background: "#070A12",
+      position: "relative",
+      overflow: "hidden",
+
+      // твой динамический фон (если используешь bgStyle)
+      ...(typeof bgStyle === "function" ? bgStyle(currentTrack?.cover_url) : {}),
     }}
-  />
-)}
+  >
+    {/* blurred cover layer (всегда СНИЗУ) */}
+    {currentTrack?.cover_url && (
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          backgroundImage:
+            typeof coverBg === "function"
+              ? coverBg(currentTrack.cover_url)
+              : `url(${currentTrack.cover_url})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          filter: "blur(40px) saturate(1.2)",
+          transform: "scale(1.15)",
+          opacity: 0.35,
+          transition: "opacity 350ms ease",
+        }}
+      />
+    )}
 
-<div style={{ position: "relative", zIndex: 1 }}></div>
+    {/* градиент-слой (тоже СНИЗУ) */}
+    <div
+      aria-hidden
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+        background:
+          "radial-gradient(1200px 700px at 20% -10%, rgba(59,130,246,0.35), transparent 60%)," +
+          "linear-gradient(to bottom, rgba(7,10,18,0.35), rgba(7,10,18,0.92))",
+      }}
+    />
 
+    {/* ✅ ВСЁ ПРИЛОЖЕНИЕ ТУТ, ПОВЕРХ ФОНА */}
+    <div style={{ position: "relative", zIndex: 1 }}>
 
 
       {/* Header */}
@@ -744,6 +766,7 @@ if (!supabase) return;
       </div>
     </div>
   </div>
+
 
   {/* Row 2: subscription */}
   <div
@@ -1421,6 +1444,7 @@ if (!supabase) return;
           icon="☺"
         />
       </div>
+    </div>
     </div>
   );
 }
