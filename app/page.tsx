@@ -978,7 +978,7 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
                     }}
                   />
                 </div>
-                
+
               </div>
             </div>
 
@@ -1023,6 +1023,34 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
             justifyContent: "flex-end",
           }}
         >
+
+          {/* Blurred cover background (Spotify-like) */}
+{currentTrack?.cover_url && (
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      backgroundImage: `url(${currentTrack.cover_url})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      filter: "blur(28px)",
+      transform: "scale(1.2)",
+      opacity: 0.35,
+      zIndex: 0,
+    }}
+  />
+)}
+
+{/* Dark overlay over blurred background */}
+<div
+  style={{
+    position: "absolute",
+    inset: 0,
+    background:
+      "linear-gradient(to bottom, rgba(7,10,18,0.55), rgba(7,10,18,0.92))",
+    zIndex: 0,
+  }}
+/>
           {/* Dim background */}
           <div
             onClick={closePlayer}
@@ -1032,6 +1060,7 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
               background: "rgba(0,0,0,0.55)",
               opacity: playerClosing ? 0 : 1,
               transition: "opacity 260ms ease",
+              zIndex: 1,
             }}
           />
 
@@ -1039,7 +1068,7 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
           <div
             style={{
               position: "relative",
-              zIndex: 1,
+              zIndex: 2,
               height: "100%",
               background:
                 "radial-gradient(900px 500px at 20% 0%, rgba(59,130,246,0.25), transparent 60%), #070A12",
