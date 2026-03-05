@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -400,7 +400,7 @@ if (!supabase) return;
 
   function playTrackById(id: string) {
     // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
-    setPlaysCount((c) => c + 1);
+
     setPlaysCount((c) => c + 1);
     setCurrentTrackId(id);
     setTimeout(() => {
@@ -1037,36 +1037,10 @@ if (!supabase) return;
               >
                 {currentTrack.artist}
               </div>
-
-              {/* progress */}
-              <div style={{ marginTop: 10 }}>
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const rect =
-                      (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    seekTo(percent);
-                  }}
-                  style={{
-                    height: 8,
-                    borderRadius: 999,
-                    background: "rgba(255,255,255,0.10)",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: dur ? `${(pos / dur) * 100}%` : "0%",
-                      background: "rgba(59,130,246,0.95)",
-                      borderRadius: 999,
-                    }}
-                  />
-                </div>
-
-              </div>
+      
+      
+          
+            
             </div>
 
             {/* Controls (NO shuffle/repeat here) */}
