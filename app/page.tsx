@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const sb = createClient(supabaseUrl, supabaseAnonKey);
 
 type Tab = "home" | "favorites" | "profile";
 
@@ -25,6 +28,7 @@ function formatTime(sec: number) {
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
 
+  const [debug, setDebug] = useState<string>("");
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
@@ -121,30 +125,34 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchTracks() {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.from("tracks").select("*");
+ async function fetchTracks() {
+  setDebug("fetchTracks: start");
 
-    if (error) {
-      console.error("SUPABASE tracks error:", error);
-      setTracks([]);
-      return;
-    }
+  const { data, error } = await sb.from("tracks").select("*");
 
-    const normalized: Track[] = (data ?? []).map((t: any) => ({
-      id: String(t.id),
-      title: t.title ?? "Unknown title",
-      artist: t.artist ?? "Unknown artist",
-      audio_url: t.audio_url,
-      cover_url: t.cover_url ?? null,
-    }));
-
-    setTracks(normalized);
-
-    if (!currentTrackId && normalized.length > 0) {
-      setCurrentTrackId(normalized[0].id);
-    }
+  if (error) {
+    console.error("SUPABASE tracks error:", error);
+    setDebug("fetchTracks ERROR: " + JSON.stringify(error));
+    setTracks([]);
+    return;
   }
+
+  setDebug("fetchTracks OK. rows=" + (data?.length ?? 0));
+
+  const normalized: Track[] = (data ?? []).map((t: any) => ({
+    id: String(t.id),
+    title: t.title ?? "Unknown title",
+    artist: t.artist ?? "Unknown artist",
+    audio_url: t.audio_url,
+    cover_url: t.cover_url ?? null,
+  }));
+
+  setTracks(normalized);
+
+  if (!currentTrackId && normalized.length > 0) {
+    setCurrentTrackId(normalized[0].id);
+  }
+}
 
   // --- favorites + playlists ---
   useEffect(() => {
@@ -548,6 +556,22 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
         paddingBottom: currentTrack ? 160 : 90,
       }}
     >
+
+      <div
+  style={{
+    margin: "0 20px 12px",
+    padding: 10,
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    fontSize: 12,
+    opacity: 0.85,
+    whiteSpace: "pre-wrap",
+  }}
+>
+  DEBUG: {debug || "—"}
+</div>
+
       {/* Header */}
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
         <div
