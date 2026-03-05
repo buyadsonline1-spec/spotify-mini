@@ -978,19 +978,7 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
                     }}
                   />
                 </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 11,
-                    opacity: 0.7,
-                    marginTop: 6,
-                  }}
-                >
-                  <span>{formatTime(pos)}</span>
-                  <span>{formatTime(dur)}</span>
-                </div>
+                
               </div>
             </div>
 
