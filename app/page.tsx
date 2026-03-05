@@ -644,42 +644,84 @@ async function removeFromPlaylist(playlistId: string, trackId: string) {
           >
             <div style={{ fontSize: 16, fontWeight: 900 }}>Profile</div>
 
-            <div style={{ marginTop: 12, opacity: 0.9, lineHeight: 1.7 }}>
-  <div>
-    <b>Username:</b> {user?.username ? `@${user.username}` : "нет"}
+            {/* Profile stats cards */}
+<div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+  {/* Row 1: username + plays */}
+  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+      }}
+    >
+      <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+        Username
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 900 }}>
+        {user?.username ? `@${user.username}` : "нет"}
+      </div>
+    </div>
+
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+      }}
+    >
+      <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+        Прослушано треков
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
+        {playsCount}
+      </div>
+    </div>
   </div>
 
-  <div>
-    <b>Прослушано:</b> {playsCount}
-  </div>
-
-  <div style={{ marginTop: 10 }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+  {/* Row 2: subscription */}
+  <div
+    style={{
+      padding: 14,
+      borderRadius: 18,
+      border: "1px solid rgba(59,130,246,0.30)",
+      background:
+        "radial-gradient(500px 180px at 20% 0%, rgba(59,130,246,0.25), rgba(255,255,255,0.04))",
+    }}
+  >
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
       <div>
-        <b>Подписка:</b> {plan === "unlimited" ? "Unlimited" : "Free"}
+        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
+          Подписка
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 900 }}>
+          {plan === "unlimited" ? "Без ограничений ✅" : "Free"}
+        </div>
+        <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
+          {plan === "unlimited"
+            ? "Доступ ко всем функциям"
+            : "Ограничения на некоторые функции"}
+        </div>
       </div>
 
       <button
         onClick={() => setPlan("unlimited")}
         style={{
-          padding: "10px 14px",
-          borderRadius: 14,
+          padding: "12px 14px",
+          borderRadius: 16,
           border: "none",
           background: "rgba(59,130,246,0.95)",
           color: "#000",
           fontWeight: 900,
           cursor: "pointer",
-          boxShadow: "0 10px 30px rgba(59,130,246,0.25)",
+          boxShadow: "0 12px 30px rgba(59,130,246,0.25)",
+          whiteSpace: "nowrap",
         }}
       >
         Без ограничений
       </button>
-    </div>
-
-    <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
-      {plan === "unlimited"
-        ? "Спасибо! У тебя полный доступ 💙"
-        : "Free: ограничения по функционалу (скоро добавим оплату)."}
     </div>
   </div>
 </div>
