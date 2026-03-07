@@ -343,9 +343,10 @@ if (!currentTrackId && normalized.length > 0) {
 
     await fetchTracks();
     alert("Трек загружен");
-  } catch (e) {
-    console.error("upload track error:", e);
-    alert("Ошибка загрузки трека");
+  } catch (e: any) {
+  console.error("upload track error:", e);
+  alert("Ошибка загрузки трека: " + (e?.message || JSON.stringify(e)));
+
   } finally {
     setIsUploading(false);
   }
