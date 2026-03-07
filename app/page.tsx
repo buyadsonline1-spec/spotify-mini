@@ -1173,10 +1173,128 @@ function handleSeekEnd() {
             </div>
           );
         })}
+
+      {tab === "playlist" && openedPlaylist && (
+  <div>
+    {/* BACK */}
+    <button
+      onClick={() => setTab("playlists")}
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: 999,
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        marginBottom: 14,
+      }}
+    >
+      ←
+    </button>
+
+    {/* HEADER */}
+    <div
+      style={{
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        marginBottom: 18,
+      }}
+    >
+      <div
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 18,
+          background: "rgba(255,255,255,0.08)",
+          display: "grid",
+          placeItems: "center",
+          fontSize: 36,
+        }}
+      >
+        ♪
+      </div>
+
+      <div>
+        <div style={{ fontSize: 20, fontWeight: 900 }}>
+          {openedPlaylist.name}
+        </div>
+
+        <div style={{ opacity: 0.7, marginTop: 6 }}>
+          {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
+        </div>
+
+        {/* PLAY BUTTONS */}
+        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <button
+            onClick={() => {
+              const playlistTracks = tracks.filter((t) =>
+                playlistTrackIds.has(t.id)
+              );
+              if (!playlistTracks.length) return;
+              playTrackById(playlistTracks[0].id);
+            }}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 999,
+              border: "none",
+              background: "rgba(59,130,246,0.95)",
+              color: "#000",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            ▶ Play
+          </button>
+
+          <button
+            onClick={() => {
+              const playlistTracks = tracks.filter((t) =>
+                playlistTrackIds.has(t.id)
+              );
+              if (!playlistTracks.length) return;
+
+              const random =
+                playlistTracks[
+                  Math.floor(Math.random() * playlistTracks.length)
+                ];
+
+              playTrackById(random.id);
+            }}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            🔀 Shuffle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* TRACKS */}
+    <TrackList
+      tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
+      currentTrackId={currentTrackId}
+      favIds={favIds}
+      onPlay={(id) => playTrackById(id)}
+      onToggleFav={(id) => toggleFavorite(id)}
+      onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+    />
+  </div>
+)}
+
       </div>
     )}
   </div>
 )}
+
           
         {tab === "upload" && (
           <div
