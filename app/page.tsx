@@ -959,7 +959,6 @@ function handleSeekEnd() {
             currentTrackId={currentTrackId}
             favIds={favIds}
             onPlay={(id) => playTrackById(id)}
-            onToggleFav={(id) => toggleFavorite(id)}
             onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
           />
         )}
@@ -972,7 +971,6 @@ function handleSeekEnd() {
               currentTrackId={currentTrackId}
               favIds={favIds}
               onPlay={(id) => playTrackById(id)}
-              onToggleFav={(id) => toggleFavorite(id)}
               onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
             />
           </>
@@ -1408,8 +1406,7 @@ function handleSeekEnd() {
               tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
               currentTrackId={currentTrackId}
               favIds={favIds}
-              onPlay={(id) => playTrackById(id)}
-              onToggleFav={(id) => toggleFavorite(id)}
+              onPlay={(id) => playTrackById(id)}        
               onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
             />
           </div>
@@ -1753,7 +1750,7 @@ function handleSeekEnd() {
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button
-                  onClick={() => shareTrack(currentTrack)}
+                  onClick={openCurrentTrackMenu}
                   style={{
                     border: "none",
                     background: "rgba(255,255,255,0.08)",
@@ -1764,11 +1761,12 @@ function handleSeekEnd() {
                     cursor: "pointer",
                     fontWeight: 900,
                   }}
-                  aria-label="Share track"
-                  title="Поделиться"
+                  aria-label="Track menu"
+                  title="Меню трека"
                 >
-                  ↗
+                  ⋯
                 </button>
+              </div>
 
                 <button
                   onClick={() => toggleFavorite(currentTrack.id)}
@@ -2176,15 +2174,13 @@ function TrackList({
   currentTrackId,
   favIds,
   onPlay,
-  onToggleFav,
-  onOpenPlaylistMenu,
+  onOpenTrackMenu,
 }: {
   tracks: Track[];
   currentTrackId: string | null;
   favIds: Set<string>;
   onPlay: (id: string) => void;
-  onToggleFav: (id: string) => void;
-  onOpenPlaylistMenu: (track: Track) => void;
+  onOpenTrackMenu: (track: Track) => void;
 }) {
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
@@ -2284,26 +2280,24 @@ function TrackList({
               </div>
             </button>
 
-            <button
-              onClick={() => onToggleFav(t.id)}
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: isFav
-                  ? "rgba(59,130,246,0.20)"
-                  : "rgba(255,255,255,0.06)",
-                color: "#fff",
-                fontWeight: 900,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-              aria-label="favorite"
-              title="Like"
-            >
-              {isFav ? "♥" : "♡"}
-            </button>
+                    <button
+            onClick={() => onOpenTrackMenu(t)}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              fontWeight: 900,
+              cursor: "pointer",
+              flex: "0 0 auto",
+            }}
+            aria-label="more"
+            title="Ещё"
+          >
+            ⋯
+          </button>
           </div>
         );
       })}
