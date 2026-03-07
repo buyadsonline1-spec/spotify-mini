@@ -63,6 +63,8 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [trackMenuOpen, setTrackMenuOpen] = useState(false);
+  const [trackMenuTrack, setTrackMenuTrack] = useState<Track | null>(null);
   const [playlistNameDraft, setPlaylistNameDraft] = useState("");
   const [playlistCoverFile, setPlaylistCoverFile] = useState<File | null>(null);
   const [isSavingPlaylist, setIsSavingPlaylist] = useState(false);
@@ -758,6 +760,21 @@ function handleSeekEnd() {
   setPlaylistMenuTrack(null);
   }
 
+  function openTrackMenu(track: Track) {
+  setTrackMenuTrack(track);
+  setTrackMenuOpen(true);
+}
+
+function closeTrackMenu() {
+  setTrackMenuOpen(false);
+  setTrackMenuTrack(null);
+}
+
+function openCurrentTrackMenu() {
+  if (!currentTrack) return;
+  openTrackMenu(currentTrack);
+}
+
   function openPlaylist(p: Playlist) {
   setOpenedPlaylist(p);
   setActivePlaylistId(p.id);
@@ -959,7 +976,7 @@ function handleSeekEnd() {
             currentTrackId={currentTrackId}
             favIds={favIds}
             onPlay={(id) => playTrackById(id)}
-            onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+            onOpenTrackMenu={(track) => openTrackMenu(track)}
           />
         )}
 
@@ -971,7 +988,7 @@ function handleSeekEnd() {
               currentTrackId={currentTrackId}
               favIds={favIds}
               onPlay={(id) => playTrackById(id)}
-              onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+              onOpenTrackMenu={(track) => openTrackMenu(track)}
             />
           </>
         )}
@@ -1407,7 +1424,7 @@ function handleSeekEnd() {
               currentTrackId={currentTrackId}
               favIds={favIds}
               onPlay={(id) => playTrackById(id)}        
-              onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+              onOpenTrackMenu={(track) => openTrackMenu(track)}
             />
           </div>
         )}
@@ -1719,16 +1736,45 @@ function handleSeekEnd() {
             }}
           >
             {/* Top bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <button
+              onClick={closePlayer}
+              style={{
+                border: "none",
+                background: "rgba(255,255,255,0.08)",
+                color: "#fff",
+                width: 44,
+                height: 44,
+                borderRadius: 999,
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+              aria-label="Close player"
+            >
+              ✕
+            </button>
+
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
+                fontWeight: 900,
+                opacity: 0.9,
+                flex: 1,
+                textAlign: "center",
               }}
             >
+              Now Playing
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
               <button
-                onClick={closePlayer}
+                onClick={openCurrentTrackMenu}
                 style={{
                   border: "none",
                   background: "rgba(255,255,255,0.08)",
@@ -1739,56 +1785,13 @@ function handleSeekEnd() {
                   cursor: "pointer",
                   fontWeight: 900,
                 }}
-                aria-label="Close player"
+                aria-label="Track menu"
+                title="Меню трека"
               >
-                ✕
+                ⋯
               </button>
-
-              <div style={{ fontWeight: 900, opacity: 0.9, flex: 1, textAlign: "center" }}>
-                Now Playing
-              </div>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={openCurrentTrackMenu}
-                  style={{
-                    border: "none",
-                    background: "rgba(255,255,255,0.08)",
-                    color: "#fff",
-                    width: 44,
-                    height: 44,
-                    borderRadius: 999,
-                    cursor: "pointer",
-                    fontWeight: 900,
-                  }}
-                  aria-label="Track menu"
-                  title="Меню трека"
-                >
-                  ⋯
-                </button>
-              </div>
-
-                <button
-                  onClick={() => toggleFavorite(currentTrack.id)}
-                  style={{
-                    border: "none",
-                    background: favIds.has(currentTrack.id)
-                      ? "rgba(59,130,246,0.25)"
-                      : "rgba(255,255,255,0.08)",
-                    color: "#fff",
-                    width: 44,
-                    height: 44,
-                    borderRadius: 999,
-                    cursor: "pointer",
-                    fontWeight: 900,
-                  }}
-                  aria-label="Favorite"
-                  title="Like"
-                >
-                  {favIds.has(currentTrack.id) ? "♥" : "♡"}
-                </button>
-              </div>
             </div>
+          </div>
 
             {/* Cover */}
             <div style={{ marginTop: 22, display: "grid", placeItems: "center" }}>
@@ -1906,6 +1909,114 @@ function handleSeekEnd() {
           </div>
         </div>
       )}
+
+      {trackMenuOpen && trackMenuTrack && (
+  <div
+    onClick={closeTrackMenu}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 70,
+      background: "rgba(0,0,0,0.55)",
+      display: "flex",
+      alignItems: "flex-end",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        padding: 16,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        background: "rgba(7,10,18,0.98)",
+        borderTop: "1px solid rgba(255,255,255,0.10)",
+      }}
+    >
+      <div style={{ fontWeight: 900, marginBottom: 12 }}>
+        {trackMenuTrack.title}
+      </div>
+
+      <div style={{ display: "grid", gap: 10 }}>
+        <button
+          onClick={() => {
+            toggleFavorite(trackMenuTrack.id);
+            closeTrackMenu();
+          }}
+          style={{
+            textAlign: "left",
+            padding: 14,
+            borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          {favIds.has(trackMenuTrack.id)
+            ? "Удалить из избранного"
+            : "Сохранить в избранные"}
+        </button>
+
+        <button
+          onClick={() => {
+            closeTrackMenu();
+            openPlaylistMenu(trackMenuTrack);
+          }}
+          style={{
+            textAlign: "left",
+            padding: 14,
+            borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Добавить в плейлист
+        </button>
+
+        <button
+          onClick={async () => {
+            await shareTrack(trackMenuTrack);
+            closeTrackMenu();
+          }}
+          style={{
+            textAlign: "left",
+            padding: 14,
+            borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Поделиться
+        </button>
+      </div>
+
+      <button
+        onClick={closeTrackMenu}
+        style={{
+          marginTop: 12,
+          width: "100%",
+          padding: 12,
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.12)",
+          background: "transparent",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        Закрыть
+      </button>
+    </div>
+  </div>
+)}
 
       {/* Playlist menu modal */}
 {playlistMenuOpen && playlistMenuTrack && (
@@ -2182,6 +2293,7 @@ function TrackList({
   onPlay: (id: string) => void;
   onOpenTrackMenu: (track: Track) => void;
 }) {
+
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
   }
@@ -2280,24 +2392,24 @@ function TrackList({
               </div>
             </button>
 
-                    <button
-            onClick={() => onOpenTrackMenu(t)}
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
-              fontWeight: 900,
-              cursor: "pointer",
-              flex: "0 0 auto",
-            }}
-            aria-label="more"
-            title="Ещё"
-          >
-            ⋯
-          </button>
+                  <button
+              onClick={() => onOpenTrackMenu(t)}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+                flex: "0 0 auto",
+              }}
+              aria-label="more"
+              title="Ещё"
+            >
+              ⋯
+            </button>
           </div>
         );
       })}
