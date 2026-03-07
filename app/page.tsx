@@ -2307,7 +2307,7 @@ function TrackList({
         let pressTimer: any = null;
 
         function startPress() {
-          pressTimer = setTimeout(() => onOpenPlaylistMenu(t), 420);
+          pressTimer = setTimeout(() => onOpenTrackMenu(t), 420);
         }
 
         function endPress() {
@@ -2335,7 +2335,7 @@ function TrackList({
               onClick={() => onPlay(t.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
-                onOpenPlaylistMenu(t);
+                onOpenTrackMenu(t);
               }}
               onTouchStart={startPress}
               onTouchEnd={endPress}
