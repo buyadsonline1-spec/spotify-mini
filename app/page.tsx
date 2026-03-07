@@ -1062,238 +1062,122 @@ function handleSeekEnd() {
           </div>
         )}
 
-        {tab === "playlists" && (
-          <div
-            style={{
-              padding: 16,
-              borderRadius: 18,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.05)",
-            }}
-          >
+     {tab === "playlists" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
+
+    {playlists.length === 0 ? (
+      <div style={{ opacity: 0.7, marginTop: 12 }}>
+        У тебя пока нет плейлистов
+      </div>
+    ) : (
+      <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
+        {playlists.map((p) => {
+          const playlistTracks = tracks.filter((t) =>
+            playlistTrackIds.has(t.id)
+          );
+
+          const covers = playlistTracks
+            .slice(0, 4)
+            .map((t) => t.cover_url)
+            .filter(Boolean);
+
+          return (
             <div
+              key={p.id}
+              onClick={() => openPlaylist(p)}
               style={{
                 display: "flex",
+                gap: 14,
+                padding: 12,
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.04)",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                marginBottom: 14,
+                cursor: "pointer",
               }}
             >
-              <button
-                onClick={() => setTab("profile")}
+              {/* COVER */}
+              <div
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: 900,
+                  width: 64,
+                  height: 64,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateRows: "1fr 1fr",
+                  background: "rgba(255,255,255,0.08)",
                 }}
               >
-                ← Назад
-              </button>
-
-              <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
-              <div style={{ width: 72 }} />
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <input
-                value={newPlaylistName}
-                onChange={(e) => setNewPlaylistName(e.target.value)}
-                placeholder="Новый плейлист…"
-                style={{
-                  flex: 1,
-                  padding: "12px 14px",
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  outline: "none",
-                }}
-              />
-              <Btn variant="primary" onClick={createPlaylist}>
-                + Create
-              </Btn>
-            </div>
-
-            <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-              {playlists.length === 0 ? (
-                <div style={{ opacity: 0.75 }}>Плейлистов пока нет.</div>
-              ) : (
-                          <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
-            {playlists.map((p) => {
-              const playlistTracks = tracks.filter((t) =>
-                playlistTrackIds.has(t.id)
-              );
-
-              const covers = playlistTracks
-                .slice(0, 4)
-                .map((t) => t.cover_url)
-                .filter(Boolean);
-
-              return (
-                <div
-                  key={p.id}
-                  onClick={() => openPlaylist(p)}
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    padding: 12,
-                    borderRadius: 18,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.05)",
-                    alignItems: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  {/* COVER */}
+                {covers.length > 0 ? (
+                  covers.map((c, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: `url(${c}) center/cover`,
+                      }}
+                    />
+                  ))
+                ) : (
                   <div
                     style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: 12,
-                      overflow: "hidden",
+                      gridColumn: "1 / span 2",
+                      gridRow: "1 / span 2",
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gridTemplateRows: "1fr 1fr",
-                      background: "rgba(255,255,255,0.08)",
+                      placeItems: "center",
+                      fontSize: 20,
+                      opacity: 0.6,
                     }}
                   >
-                    {covers.length > 0 ? (
-                      covers.map((c, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            background: `url(${c}) center/cover`,
-                          }}
-                        />
-                      ))
-                    ) : (
-                      <div
-                        style={{
-                          gridColumn: "1 / span 2",
-                          gridRow: "1 / span 2",
-                          display: "grid",
-                          placeItems: "center",
-                          fontSize: 18,
-                          opacity: 0.6,
-                        }}
-                      >
-                        ♪
-                      </div>
-                    )}
-                  </div>
-
-                  {/* INFO */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 900 }}>{p.name}</div>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {playlistTracks.length} tracks
-                    </div>
-                  </div>
-
-                  {/* PLAY */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!playlistTracks.length) return;
-                      playTrackById(playlistTracks[0].id);
-                    }}
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 999,
-                      border: "none",
-                      background: "rgba(59,130,246,0.95)",
-                      color: "#000",
-                      fontWeight: 900,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ▶
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-      </div>
-      
-            {activePlaylistId && (
-              <div style={{ marginTop: 16 }}>
-                <div
-                  style={{
-                    fontWeight: 900,
-                    marginBottom: 10,
-                    opacity: 0.9,
-                  }}
-                >
-                  Tracks in playlist
-                </div>
-
-                {tracks.filter((t) => playlistTrackIds.has(t.id)).length === 0 ? (
-                  <div style={{ opacity: 0.75 }}>
-                    Пусто. Добавляй треки долгим тапом на Home/Favorites.
-                  </div>
-                ) : (
-                  <div style={{ display: "grid", gap: 10 }}>
-                    {tracks
-                      .filter((t) => playlistTrackIds.has(t.id))
-                      .map((t) => (
-                        <div
-                          key={t.id}
-                          style={{
-                            padding: 12,
-                            borderRadius: 18,
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            background: "rgba(255,255,255,0.04)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                          }}
-                        >
-                          <button
-                            onClick={() => playTrackById(t.id)}
-                            style={{
-                              all: "unset",
-                              cursor: "pointer",
-                              flex: 1,
-                              minWidth: 0,
-                            }}
-                          >
-                            <div style={{ fontWeight: 900 }}>{t.title}</div>
-                            <div style={{ opacity: 0.7, fontSize: 13 }}>
-                              {t.artist}
-                            </div>
-                          </button>
-
-                          <button
-                            onClick={() => removeFromPlaylist(activePlaylistId, t.id)}
-                            style={{
-                              width: 38,
-                              height: 38,
-                              borderRadius: 999,
-                              border: "1px solid rgba(255,255,255,0.12)",
-                              background: "rgba(255,255,255,0.06)",
-                              color: "#fff",
-                              fontWeight: 900,
-                              cursor: "pointer",
-                            }}
-                            title="Remove"
-                          >
-                            −
-                          </button>
-                        </div>
-                      ))}
+                    ♪
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        )}
 
+              {/* INFO */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 900 }}>{p.name}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>
+                  {playlistTracks.length} tracks
+                </div>
+              </div>
+
+              {/* PLAY */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!playlistTracks.length) return;
+                  playTrackById(playlistTracks[0].id);
+                }}
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 999,
+                  border: "none",
+                  background: "rgba(59,130,246,0.95)",
+                  color: "#000",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+              >
+                ▶
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
+          
         {tab === "upload" && (
           <div
             style={{
