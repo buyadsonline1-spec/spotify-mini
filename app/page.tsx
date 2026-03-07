@@ -867,43 +867,7 @@ function handleSeekEnd() {
             onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
           />
         )}
-
-              {tab === "playlist" && openedPlaylist && (
-        <div>
-          {/* header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <button
-              onClick={() => setTab("playlists")}
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 900,
-              }}
-            >
-              ←
-            </button>
-
-            <div style={{ fontSize: 18, fontWeight: 900 }}>
-              {openedPlaylist.name}
-            </div>
-          </div>
-
-          {/* tracks */}
-          <TrackList
-            tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
-            currentTrackId={currentTrackId}
-            favIds={favIds}
-            onPlay={(id) => playTrackById(id)}
-            onToggleFav={(id) => toggleFavorite(id)}
-            onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
-          />
-        </div>
-      )}
+            
 
         {tab === "favorites" && (
           <>
@@ -1071,15 +1035,61 @@ function handleSeekEnd() {
       background: "rgba(255,255,255,0.05)",
     }}
   >
-    <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 14 }}>
-      Playlists
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("profile")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
+      <div style={{ width: 72 }} />
     </div>
 
-    {playlists.length === 0 ? (
-      <div style={{ opacity: 0.7 }}>У тебя пока нет плейлистов</div>
-    ) : (
-      <div style={{ display: "grid", gap: 14 }}>
-        {playlists.map((p) => (
+    {/* create */}
+    <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+      <input
+        value={newPlaylistName}
+        onChange={(e) => setNewPlaylistName(e.target.value)}
+        placeholder="Новый плейлист…"
+        style={{
+          flex: 1,
+          padding: "12px 14px",
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          outline: "none",
+        }}
+      />
+      <Btn variant="primary" onClick={createPlaylist}>
+        + Create
+      </Btn>
+    </div>
+
+    {/* playlists list */}
+    <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
+      {playlists.length === 0 ? (
+        <div style={{ opacity: 0.7 }}>У тебя пока нет плейлистов</div>
+      ) : (
+        playlists.map((p) => (
           <div
             key={p.id}
             onClick={() => openPlaylist(p)}
@@ -1116,9 +1126,9 @@ function handleSeekEnd() {
               </div>
             </div>
           </div>
-        ))}
-      </div>
-    )}
+        ))
+      )}
+    </div>
   </div>
 )}
       
