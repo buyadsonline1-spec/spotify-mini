@@ -855,7 +855,7 @@ function handleSeekEnd() {
         )}
       </div>
 
-           {/* Content */}
+                {/* Content */}
       <div style={{ padding: "0 20px" }}>
         {tab === "home" && (
           <TrackList
@@ -867,7 +867,6 @@ function handleSeekEnd() {
             onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
           />
         )}
-            
 
         {tab === "favorites" && (
           <>
@@ -1026,232 +1025,229 @@ function handleSeekEnd() {
           </div>
         )}
 
-     {tab === "playlists" && (
-  <div
-    style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
-      <button
-        onClick={() => setTab("profile")}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-        }}
-      >
-        ← Назад
-      </button>
-
-      <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
-      <div style={{ width: 72 }} />
-    </div>
-
-    {/* create */}
-    <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-      <input
-        value={newPlaylistName}
-        onChange={(e) => setNewPlaylistName(e.target.value)}
-        placeholder="Новый плейлист…"
-        style={{
-          flex: 1,
-          padding: "12px 14px",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          outline: "none",
-        }}
-      />
-      <Btn variant="primary" onClick={createPlaylist}>
-        + Create
-      </Btn>
-    </div>
-
-    {/* playlists list */}
-    <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
-      {playlists.length === 0 ? (
-        <div style={{ opacity: 0.7 }}>У тебя пока нет плейлистов</div>
-      ) : (
-        playlists.map((p) => (
+        {tab === "playlists" && (
           <div
-            key={p.id}
-            onClick={() => openPlaylist(p)}
             style={{
-              display: "flex",
-              gap: 14,
-              padding: 12,
+              padding: 16,
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.04)",
-              alignItems: "center",
-              cursor: "pointer",
+              background: "rgba(255,255,255,0.05)",
             }}
           >
             <div
               style={{
-                width: 64,
-                height: 64,
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.08)",
-                display: "grid",
-                placeItems: "center",
-                fontSize: 20,
-                opacity: 0.8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 14,
               }}
             >
-              ♪
+              <button
+                onClick={() => setTab("profile")}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: 900,
+                }}
+              >
+                ← Назад
+              </button>
+
+              <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
+              <div style={{ width: 72 }} />
             </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 900 }}>{p.name}</div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>
-                Открыть плейлист
-              </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <input
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                placeholder="Новый плейлист…"
+                style={{
+                  flex: 1,
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+              <Btn variant="primary" onClick={createPlaylist}>
+                + Create
+              </Btn>
+            </div>
+
+            <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
+              {playlists.length === 0 ? (
+                <div style={{ opacity: 0.7 }}>У тебя пока нет плейлистов</div>
+              ) : (
+                playlists.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => openPlaylist(p)}
+                    style={{
+                      display: "flex",
+                      gap: 14,
+                      padding: 12,
+                      borderRadius: 18,
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgba(255,255,255,0.04)",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 12,
+                        background: "rgba(255,255,255,0.08)",
+                        display: "grid",
+                        placeItems: "center",
+                        fontSize: 20,
+                        opacity: 0.8,
+                      }}
+                    >
+                      ♪
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 900 }}>{p.name}</div>
+                      <div style={{ fontSize: 12, opacity: 0.7 }}>
+                        Открыть плейлист
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
-      
-  
-{tab === "playlist" && openedPlaylist && (
-  <div>
-    {/* BACK */}
-    <button
-      onClick={() => setTab("playlists")}
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.12)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 900,
-        marginBottom: 14,
-      }}
-    >
-      ←
-    </button>
+        )}
 
-    {/* HEADER */}
-    <div
-      style={{
-        display: "flex",
-        gap: 16,
-        alignItems: "center",
-        marginBottom: 18,
-      }}
-    >
-      <div
-        style={{
-          width: 120,
-          height: 120,
-          borderRadius: 18,
-          background: "rgba(255,255,255,0.08)",
-          display: "grid",
-          placeItems: "center",
-          fontSize: 36,
-        }}
-      >
-        ♪
-      </div>
-
-      <div>
-        <div style={{ fontSize: 20, fontWeight: 900 }}>
-          {openedPlaylist.name}
-        </div>
-
-        <div style={{ opacity: 0.7, marginTop: 6 }}>
-          {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
-        </div>
-
-
-        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <button
-            onClick={() => {
-              const playlistTracks = tracks.filter((t) =>
-                playlistTrackIds.has(t.id)
-              );
-              if (!playlistTracks.length) return;
-              playTrackById(playlistTracks[0].id);
-            }}
+        {tab === "playlist" && openedPlaylist && (
+          <div
             style={{
-              padding: "10px 14px",
-              borderRadius: 999,
-              border: "none",
-              background: "rgba(59,130,246,0.95)",
-              color: "#000",
-              fontWeight: 900,
-              cursor: "pointer",
+              padding: 16,
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.05)",
             }}
           >
-            ▶ Play
-          </button>
+            <button
+              onClick={() => setTab("playlists")}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 900,
+                marginBottom: 14,
+              }}
+            >
+              ←
+            </button>
 
-          <button
-            onClick={() => {
-              const playlistTracks = tracks.filter((t) =>
-                playlistTrackIds.has(t.id)
-              );
-              if (!playlistTracks.length) return;
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                alignItems: "center",
+                marginBottom: 18,
+              }}
+            >
+              <div
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.08)",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: 36,
+                }}
+              >
+                ♪
+              </div>
 
-              const random =
-                playlistTracks[
-                  Math.floor(Math.random() * playlistTracks.length)
-                ];
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 900 }}>
+                  {openedPlaylist.name}
+                </div>
 
-              playTrackById(random.id);
-            }}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            🔀 Shuffle
-          </button>
-        </div>
-      </div>
-    </div>
+                <div style={{ opacity: 0.7, marginTop: 6 }}>
+                  {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
+                </div>
 
+                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                  <button
+                    onClick={() => {
+                      const playlistTracks = tracks.filter((t) =>
+                        playlistTrackIds.has(t.id)
+                      );
+                      if (!playlistTracks.length) return;
+                      playTrackById(playlistTracks[0].id);
+                    }}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 999,
+                      border: "none",
+                      background: "rgba(59,130,246,0.95)",
+                      color: "#000",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    ▶ Play
+                  </button>
 
-    <TrackList
-      tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
-      currentTrackId={currentTrackId}
-      favIds={favIds}
-      onPlay={(id) => playTrackById(id)}
-      onToggleFav={(id) => toggleFavorite(id)}
-      onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
-    />
-  </div>
-)}
+                  <button
+                    onClick={() => {
+                      const playlistTracks = tracks.filter((t) =>
+                        playlistTrackIds.has(t.id)
+                      );
+                      if (!playlistTracks.length) return;
 
+                      const random =
+                        playlistTracks[
+                          Math.floor(Math.random() * playlistTracks.length)
+                        ];
 
+                      playTrackById(random.id);
+                    }}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🔀 Shuffle
+                  </button>
+                </div>
+              </div>
+            </div>
 
-          
+            <TrackList
+              tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
+              currentTrackId={currentTrackId}
+              favIds={favIds}
+              onPlay={(id) => playTrackById(id)}
+              onToggleFav={(id) => toggleFavorite(id)}
+              onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+            />
+          </div>
+        )}
+
         {tab === "upload" && (
           <div
             style={{
