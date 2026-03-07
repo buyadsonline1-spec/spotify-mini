@@ -730,7 +730,7 @@ function handleSeekEnd() {
     boxShadow: UI.shadow,
   };
 
-  const activeCover = playerMounted || isPlaying ? currentTrack?.cover_url : null;
+  const activeCover = playerMounted ? currentTrack?.cover_url : null;
 
   // --- UI constants ---
 
@@ -1071,110 +1071,59 @@ function handleSeekEnd() {
       background: "rgba(255,255,255,0.05)",
     }}
   >
-    <div style={{ fontSize: 18, fontWeight: 900 }}>Playlists</div>
+    <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 14 }}>
+      Playlists
+    </div>
 
     {playlists.length === 0 ? (
-      <div style={{ opacity: 0.7, marginTop: 12 }}>
-        У тебя пока нет плейлистов
-      </div>
+      <div style={{ opacity: 0.7 }}>У тебя пока нет плейлистов</div>
     ) : (
-      <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
-        {playlists.map((p) => {
-          const playlistTracks = tracks.filter((t) =>
-            playlistTrackIds.has(t.id)
-          );
-
-          const covers = playlistTracks
-            .slice(0, 4)
-            .map((t) => t.cover_url)
-            .filter(Boolean);
-
-          return (
+      <div style={{ display: "grid", gap: 14 }}>
+        {playlists.map((p) => (
+          <div
+            key={p.id}
+            onClick={() => openPlaylist(p)}
+            style={{
+              display: "flex",
+              gap: 14,
+              padding: 12,
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.04)",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
             <div
-              key={p.id}
-              onClick={() => openPlaylist(p)}
               style={{
-                display: "flex",
-                gap: 14,
-                padding: 12,
-                borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.04)",
-                alignItems: "center",
-                cursor: "pointer",
+                width: 64,
+                height: 64,
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.08)",
+                display: "grid",
+                placeItems: "center",
+                fontSize: 20,
+                opacity: 0.8,
               }}
             >
-              {/* COVER */}
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gridTemplateRows: "1fr 1fr",
-                  background: "rgba(255,255,255,0.08)",
-                }}
-              >
-                {covers.length > 0 ? (
-                  covers.map((c, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: `url(${c}) center/cover`,
-                      }}
-                    />
-                  ))
-                ) : (
-                  <div
-                    style={{
-                      gridColumn: "1 / span 2",
-                      gridRow: "1 / span 2",
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: 20,
-                      opacity: 0.6,
-                    }}
-                  >
-                    ♪
-                  </div>
-                )}
-              </div>
-
-              {/* INFO */}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 900 }}>{p.name}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>
-                  {playlistTracks.length} tracks
-                </div>
-              </div>
-
-              {/* PLAY */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!playlistTracks.length) return;
-                  playTrackById(playlistTracks[0].id);
-                }}
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 999,
-                  border: "none",
-                  background: "rgba(59,130,246,0.95)",
-                  color: "#000",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-              >
-                ▶
-              </button>
+              ♪
             </div>
-          );
-        })}
 
-      {tab === "playlist" && openedPlaylist && (
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 900 }}>{p.name}</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>
+                Открыть плейлист
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+      
+  
+{tab === "playlist" && openedPlaylist && (
   <div>
     {/* BACK */}
     <button
@@ -1226,7 +1175,7 @@ function handleSeekEnd() {
           {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
         </div>
 
-        {/* PLAY BUTTONS */}
+
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
           <button
             onClick={() => {
@@ -1278,7 +1227,7 @@ function handleSeekEnd() {
       </div>
     </div>
 
-    {/* TRACKS */}
+
     <TrackList
       tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
       currentTrackId={currentTrackId}
@@ -1290,10 +1239,7 @@ function handleSeekEnd() {
   </div>
 )}
 
-      </div>
-    )}
-  </div>
-)}
+
 
           
         {tab === "upload" && (
