@@ -1264,30 +1264,43 @@ function handleSeekEnd() {
 >
   {/* cover */}
   <label
-    style={{
-      width: 110,
-      height: 110,
-      borderRadius: 18,
-      background: openedPlaylist.cover_url
-        ? `url(${openedPlaylist.cover_url}) center/cover no-repeat`
-        : "rgba(255,255,255,0.08)",
-      display: "grid",
-      placeItems: "center",
-      fontSize: 34,
-      cursor: "pointer",
-      overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.08)",
-      flexShrink: 0,
+  style={{
+    width: 92,
+    height: 92,
+    borderRadius: 16,
+    background: openedPlaylist.cover_url
+      ? `url(${openedPlaylist.cover_url}) center/cover no-repeat`
+      : "rgba(255,255,255,0.08)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 22,
+    cursor: "pointer",
+    overflow: "hidden",
+    border: "1px solid rgba(255,255,255,0.08)",
+    gap: 4,
+  }}
+>
+  {!openedPlaylist.cover_url && (
+    <>
+      <div style={{ fontSize: 24 }}>+</div>
+      <div style={{ fontSize: 11, opacity: 0.7 }}>Добавить</div>
+    </>
+  )}
+
+  <input
+    type="file"
+    accept="image/*"
+    style={{ display: "none" }}
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPlaylistCoverFile(file);
+      uploadPlaylistCover();
     }}
-  >
-    {!openedPlaylist.cover_url ? "♪" : ""}
-    <input
-      type="file"
-      accept="image/*"
-      style={{ display: "none" }}
-      onChange={(e) => setPlaylistCoverFile(e.target.files?.[0] ?? null)}
-    />
-  </label>
+  />
+</label>
 
   {/* right side */}
   <div style={{ minWidth: 0 }}>
@@ -1337,23 +1350,7 @@ function handleSeekEnd() {
       >
         Сохранить
       </button>
-
-      <button
-        onClick={uploadPlaylistCover}
-        disabled={!playlistCoverFile || isSavingPlaylist}
-        style={{
-          padding: "12px 10px",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          fontWeight: 900,
-          cursor: "pointer",
-          minHeight: 50,
-        }}
-      >
-        {playlistCoverFile ? "Загрузить" : "Аватарка"}
-      </button>
+  
     </div>
 
     {/* row 2 */}
