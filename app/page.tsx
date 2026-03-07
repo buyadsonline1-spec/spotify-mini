@@ -4,7 +4,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Tab = "home" | "favorites" | "profile" | "playlists" | "upload";
+type Tab = "home" | "favorites" | "profile" | "playlists" | "playlist" | "upload";
 
 type Track = {
   id: string;
@@ -59,6 +59,7 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [openedPlaylist, setOpenedPlaylist] = useState<Playlist | null>(null);
   const [isSeeking, setIsSeeking] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
@@ -661,6 +662,12 @@ function handleSeekEnd() {
   setPlaylistMenuTrack(null);
   }
 
+  function openPlaylist(p: Playlist) {
+  setOpenedPlaylist(p);
+  setActivePlaylistId(p.id);
+  setTab("playlist");
+}
+
     // --- UI helpers (beautiful buttons) ---
   const UI = {
     blue: "rgba(59,130,246,0.95)",
@@ -860,6 +867,43 @@ function handleSeekEnd() {
             onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
           />
         )}
+
+              {tab === "playlist" && openedPlaylist && (
+        <div>
+          {/* header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <button
+              onClick={() => setTab("playlists")}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              ←
+            </button>
+
+            <div style={{ fontSize: 18, fontWeight: 900 }}>
+              {openedPlaylist.name}
+            </div>
+          </div>
+
+          {/* tracks */}
+          <TrackList
+            tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
+            currentTrackId={currentTrackId}
+            favIds={favIds}
+            onPlay={(id) => playTrackById(id)}
+            onToggleFav={(id) => toggleFavorite(id)}
+            onOpenPlaylistMenu={(track) => openPlaylistMenu(track)}
+          />
+        </div>
+      )}
 
         {tab === "favorites" && (
           <>
@@ -1082,7 +1126,7 @@ function handleSeekEnd() {
                 playlists.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => setActivePlaylistId(p.id)}
+                    onClick={() => openPlaylist(p)}
                     style={{
                       textAlign: "left",
                       padding: 12,
