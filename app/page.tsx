@@ -59,7 +59,11 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
-
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadArtist, setUploadArtist] = useState("");
+  const [uploadAudioFile, setUploadAudioFile] = useState<File | null>(null);
+  const [uploadCoverFile, setUploadCoverFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);  
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
@@ -269,6 +273,83 @@ if (!currentTrackId && normalized.length > 0) {
       (data ?? []).map((p: any) => ({ id: String(p.id), name: p.name }))
     );
   }
+
+  async function handleUploadTrack() {
+  if (!supabase) return;
+
+  if (!uploadTitle.trim() || !uploadArtist.trim() || !uploadAudioFile) {
+    alert("Заполни title, artist и выбери mp3");
+    return;
+  }
+
+  try {
+    setIsUploading(true);
+
+    const audioExt = uploadAudioFile.name.split(".").pop() || "mp3";
+    const audioPath = `audio/${Date.now()}-${Math.random()
+      .toString(16)
+      .slice(2)}.${audioExt}`;
+
+    const { error: audioErr } = await supabase.storage
+      .from("tracks")
+      .upload(audioPath, uploadAudioFile, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (audioErr) throw audioErr;
+
+    const {
+      data: { publicUrl: audioUrl },
+    } = supabase.storage.from("tracks").getPublicUrl(audioPath);
+
+    let coverUrl: string | null = null;
+
+    if (uploadCoverFile) {
+      const coverExt = uploadCoverFile.name.split(".").pop() || "jpg";
+      const coverPath = `covers/${Date.now()}-${Math.random()
+        .toString(16)
+        .slice(2)}.${coverExt}`;
+
+      const { error: coverErr } = await supabase.storage
+        .from("covers")
+        .upload(coverPath, uploadCoverFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (coverErr) throw coverErr;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("covers").getPublicUrl(coverPath);
+
+      coverUrl = publicUrl;
+    }
+
+    const { error: insertErr } = await supabase.from("tracks").insert({
+      title: uploadTitle.trim(),
+      artist: uploadArtist.trim(),
+      audio_url: audioUrl,
+      cover_url: coverUrl,
+    });
+
+    if (insertErr) throw insertErr;
+
+    setUploadTitle("");
+    setUploadArtist("");
+    setUploadAudioFile(null);
+    setUploadCoverFile(null);
+
+    await fetchTracks();
+    alert("Трек загружен");
+  } catch (e) {
+    console.error("upload track error:", e);
+    alert("Ошибка загрузки трека");
+  } finally {
+    setIsUploading(false);
+  }
+}
 
   async function createPlaylist() {
     const name = newPlaylistName.trim();
@@ -813,6 +894,93 @@ if (!supabase) return;
         Без ограничений
       </button>
     </div>
+  </div>
+</div>
+
+<div
+  style={{
+    marginTop: 18,
+    paddingTop: 14,
+    borderTop: "1px solid rgba(255,255,255,0.10)",
+  }}
+>
+  <div style={{ fontSize: 16, fontWeight: 900 }}>Upload track</div>
+
+  <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+    <input
+      value={uploadTitle}
+      onChange={(e) => setUploadTitle(e.target.value)}
+      placeholder="Название трека"
+      style={{
+        width: "100%",
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        outline: "none",
+      }}
+    />
+
+    <input
+      value={uploadArtist}
+      onChange={(e) => setUploadArtist(e.target.value)}
+      placeholder="Исполнитель"
+      style={{
+        width: "100%",
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        outline: "none",
+      }}
+    />
+
+    <label
+      style={{
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        cursor: "pointer",
+      }}
+    >
+      {uploadAudioFile ? `MP3: ${uploadAudioFile.name}` : "Выбрать mp3"}
+      <input
+        type="file"
+        accept="audio/mpeg,audio/mp3"
+        style={{ display: "none" }}
+        onChange={(e) => setUploadAudioFile(e.target.files?.[0] ?? null)}
+      />
+    </label>
+
+    <label
+      style={{
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        cursor: "pointer",
+      }}
+    >
+      {uploadCoverFile ? `Cover: ${uploadCoverFile.name}` : "Выбрать обложку (необязательно)"}
+      <input
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => setUploadCoverFile(e.target.files?.[0] ?? null)}
+      />
+    </label>
+
+    <Btn
+      variant="primary"
+      onClick={handleUploadTrack}
+      disabled={isUploading}
+      style={{ width: "100%" }}
+    >
+      {isUploading ? "Загрузка..." : "Upload"}
+    </Btn>
   </div>
 </div>
 
