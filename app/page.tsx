@@ -161,6 +161,21 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+  if (!tracks.length) return;
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  const trackFromUrl = url.searchParams.get("track");
+
+  if (!trackFromUrl) return;
+
+  const exists = tracks.find((t) => t.id === trackFromUrl);
+  if (exists) {
+    setCurrentTrackId(trackFromUrl);
+  }
+}, [tracks]);
+
  async function fetchTracks() {
   if (!supabase) return;
 
@@ -517,7 +532,7 @@ if (!supabase) return;
       setIsPlaying(false);
     }
   }
-  
+
 function seekFromClientX(clientX: number, element: HTMLDivElement) {
   const rect = element.getBoundingClientRect();
   const percent = (clientX - rect.left) / rect.width;
@@ -594,6 +609,35 @@ function handleSeekEnd() {
     const prevIdx = (idx - 1 + queue.length) % queue.length;
     playTrackById(queue[prevIdx].id);
   }
+
+  async function shareTrack(track: Track) {
+  if (typeof window === "undefined") return;
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}?track=${encodeURIComponent(track.id)}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${track.title} — ${track.artist}`,
+        text: `Слушай трек ${track.title} — ${track.artist} в pokoro`,
+        url: shareUrl,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    alert("Ссылка на трек скопирована");
+  } catch (e) {
+    console.error("share error:", e);
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Ссылка на трек скопирована");
+    } catch {
+      alert(shareUrl);
+    }
+  }
+}
 
   // --- player open/close animation ---
   function openPlayer() {
@@ -1447,6 +1491,7 @@ function handleSeekEnd() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                gap: 10,
               }}
             >
               <button
@@ -1466,27 +1511,49 @@ function handleSeekEnd() {
                 ✕
               </button>
 
-              <div style={{ fontWeight: 900, opacity: 0.9 }}>Now Playing</div>
+              <div style={{ fontWeight: 900, opacity: 0.9, flex: 1, textAlign: "center" }}>
+                Now Playing
+              </div>
 
-              <button
-                onClick={() => toggleFavorite(currentTrack.id)}
-                style={{
-                  border: "none",
-                  background: favIds.has(currentTrack.id)
-                    ? "rgba(59,130,246,0.25)"
-                    : "rgba(255,255,255,0.08)",
-                  color: "#fff",
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  cursor: "pointer",
-                  fontWeight: 900,
-                }}
-                aria-label="Favorite"
-                title="Like"
-              >
-                {favIds.has(currentTrack.id) ? "♥" : "♡"}
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => shareTrack(currentTrack)}
+                  style={{
+                    border: "none",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#fff",
+                    width: 44,
+                    height: 44,
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontWeight: 900,
+                  }}
+                  aria-label="Share track"
+                  title="Поделиться"
+                >
+                  ↗
+                </button>
+
+                <button
+                  onClick={() => toggleFavorite(currentTrack.id)}
+                  style={{
+                    border: "none",
+                    background: favIds.has(currentTrack.id)
+                      ? "rgba(59,130,246,0.25)"
+                      : "rgba(255,255,255,0.08)",
+                    color: "#fff",
+                    width: 44,
+                    height: 44,
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontWeight: 900,
+                  }}
+                  aria-label="Favorite"
+                  title="Like"
+                >
+                  {favIds.has(currentTrack.id) ? "♥" : "♡"}
+                </button>
+              </div>
             </div>
 
             {/* Cover */}
