@@ -14,7 +14,11 @@ type Track = {
   cover_url?: string | null;
 };
 
-type Playlist = { id: string; name: string };
+type Playlist = {
+  id: string;
+  name: string;
+  cover_url?: string | null;
+};
 
 function formatTime(sec: number) {
   if (!Number.isFinite(sec) || sec < 0) return "0:00";
@@ -59,6 +63,9 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [playlistNameDraft, setPlaylistNameDraft] = useState("");
+  const [playlistCoverFile, setPlaylistCoverFile] = useState<File | null>(null);
+  const [isSavingPlaylist, setIsSavingPlaylist] = useState(false);
   const [openedPlaylist, setOpenedPlaylist] = useState<Playlist | null>(null);
   const [isSeeking, setIsSeeking] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
@@ -71,6 +78,14 @@ export default function Home() {
   const [playsCount, setPlaysCount] = useState(0);
   const [plan, setPlan] = useState<"free" | "unlimited">("free");
   // --- persist playsCount + plan ---
+  useEffect(() => {
+  if (!openedPlaylist) {
+    setPlaylistNameDraft("");
+    return;
+  }
+  setPlaylistNameDraft(openedPlaylist.name);
+}, [openedPlaylist]);
+
 useEffect(() => {
   if (typeof window === "undefined") return;
 
@@ -80,6 +95,82 @@ useEffect(() => {
   if (savedPlays) setPlaysCount(Number(savedPlays) || 0);
   if (savedPlan === "free" || savedPlan === "unlimited") setPlan(savedPlan);
 }, []);
+
+async function savePlaylistName() {
+  if (!supabase || !openedPlaylist) return;
+
+  const name = playlistNameDraft.trim();
+  if (!name) return;
+
+  setIsSavingPlaylist(true);
+
+  const { error } = await supabase
+    .from("playlists")
+    .update({ name })
+    .eq("id", openedPlaylist.id);
+
+  setIsSavingPlaylist(false);
+
+  if (error) {
+    console.error("savePlaylistName error:", error);
+    alert("Не удалось изменить название");
+    return;
+  }
+
+  const updated = { ...openedPlaylist, name };
+  setOpenedPlaylist(updated);
+
+  setPlaylists((prev) =>
+    prev.map((p) => (p.id === openedPlaylist.id ? { ...p, name } : p))
+  );
+}
+
+async function uploadPlaylistCover() {
+  if (!supabase || !openedPlaylist || !playlistCoverFile) return;
+
+  try {
+    setIsSavingPlaylist(true);
+
+    const ext = playlistCoverFile.name.split(".").pop() || "jpg";
+    const path = `playlist-cover/${openedPlaylist.id}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("playlist-covers")
+      .upload(path, playlistCoverFile, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("playlist-covers").getPublicUrl(path);
+
+    const { error: updateError } = await supabase
+      .from("playlists")
+      .update({ cover_url: publicUrl })
+      .eq("id", openedPlaylist.id);
+
+    if (updateError) throw updateError;
+
+    const updated = { ...openedPlaylist, cover_url: publicUrl };
+    setOpenedPlaylist(updated);
+
+    setPlaylists((prev) =>
+      prev.map((p) =>
+        p.id === openedPlaylist.id ? { ...p, cover_url: publicUrl } : p
+      )
+    );
+
+    setPlaylistCoverFile(null);
+  } catch (e) {
+    console.error("uploadPlaylistCover error:", e);
+    alert("Не удалось загрузить аватарку");
+  } finally {
+    setIsSavingPlaylist(false);
+  }
+}
 
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -277,7 +368,7 @@ if (!currentTrackId && normalized.length > 0) {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("playlists")
-      .select("id,name")
+      .select("id,name,cover_url")
       .eq("user_id", userId);
 
     if (error) {
@@ -287,9 +378,12 @@ if (!currentTrackId && normalized.length > 0) {
     }
 
     setPlaylists(
-      (data ?? []).map((p: any) => ({ id: String(p.id), name: p.name }))
-    );
-  }
+  (data ?? []).map((p: any) => ({
+    id: String(p.id),
+    name: p.name,
+    cover_url: p.cover_url ?? null,
+  }))
+);
 
   async function handleUploadTrack() {
   if (!supabase) return;
@@ -377,7 +471,7 @@ if (!currentTrackId && normalized.length > 0) {
     const { data, error } = await supabase
       .from("playlists")
       .insert({ user_id: userId, name })
-      .select("id,name")
+      .select("id,name,cover_url")
       .single();
 
     if (error) {
@@ -1106,14 +1200,17 @@ function handleSeekEnd() {
                         width: 64,
                         height: 64,
                         borderRadius: 12,
-                        background: "rgba(255,255,255,0.08)",
+                        background: p.cover_url
+                          ? `url(${p.cover_url}) center/cover no-repeat`
+                          : "rgba(255,255,255,0.08)",
                         display: "grid",
                         placeItems: "center",
                         fontSize: 20,
                         opacity: 0.8,
+                        overflow: "hidden",
                       }}
                     >
-                      ♪
+                      {!p.cover_url ? "♪" : ""}
                     </div>
 
                     <div style={{ flex: 1 }}>
@@ -1156,86 +1253,144 @@ function handleSeekEnd() {
             </button>
 
             <div
+            style={{
+              display: "flex",
+              gap: 16,
+              alignItems: "center",
+              marginBottom: 18,
+            }}
+          >
+            <label
               style={{
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                marginBottom: 18,
+                width: 120,
+                height: 120,
+                borderRadius: 18,
+                background: openedPlaylist.cover_url
+                  ? `url(${openedPlaylist.cover_url}) center/cover no-repeat`
+                  : "rgba(255,255,255,0.08)",
+                display: "grid",
+                placeItems: "center",
+                fontSize: 36,
+                cursor: "pointer",
+                overflow: "hidden",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <div
+              {!openedPlaylist.cover_url ? "♪" : ""}
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => setPlaylistCoverFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+
+            <div style={{ flex: 1 }}>
+              <input
+                value={playlistNameDraft}
+                onChange={(e) => setPlaylistNameDraft(e.target.value)}
+                placeholder="Название плейлиста"
                 style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 18,
-                  background: "rgba(255,255,255,0.08)",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: 36,
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  outline: "none",
+                  fontSize: 18,
+                  fontWeight: 900,
                 }}
-              >
-                ♪
+              />
+
+              <div style={{ opacity: 0.7, marginTop: 8 }}>
+                {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
               </div>
 
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 900 }}>
-                  {openedPlaylist.name}
-                </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+                <button
+                  onClick={savePlaylistName}
+                  disabled={isSavingPlaylist}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: "none",
+                    background: "rgba(59,130,246,0.95)",
+                    color: "#000",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  Сохранить название
+                </button>
 
-                <div style={{ opacity: 0.7, marginTop: 6 }}>
-                  {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
-                </div>
+                <button
+                  onClick={uploadPlaylistCover}
+                  disabled={!playlistCoverFile || isSavingPlaylist}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  {playlistCoverFile ? "Загрузить аватарку" : "Выбрать аватарку"}
+                </button>
+              </div>
 
-                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                  <button
-                    onClick={() => {
-                      const playlistTracks = tracks.filter((t) =>
-                        playlistTrackIds.has(t.id)
-                      );
-                      if (!playlistTracks.length) return;
-                      playTrackById(playlistTracks[0].id);
-                    }}
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: 999,
-                      border: "none",
-                      background: "rgba(59,130,246,0.95)",
-                      color: "#000",
-                      fontWeight: 900,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ▶ Play
-                  </button>
+              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                <button
+                  onClick={() => {
+                    const playlistTracks = tracks.filter((t) =>
+                      playlistTrackIds.has(t.id)
+                    );
+                    if (!playlistTracks.length) return;
+                    playTrackById(playlistTracks[0].id);
+                  }}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: "none",
+                    background: "rgba(59,130,246,0.95)",
+                    color: "#000",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  ▶ Play
+                </button>
 
-                  <button
-                    onClick={() => {
-                      const playlistTracks = tracks.filter((t) =>
-                        playlistTrackIds.has(t.id)
-                      );
-                      if (!playlistTracks.length) return;
+                <button
+                  onClick={() => {
+                    const playlistTracks = tracks.filter((t) =>
+                      playlistTrackIds.has(t.id)
+                    );
+                    if (!playlistTracks.length) return;
 
-                      const random =
-                        playlistTracks[
-                          Math.floor(Math.random() * playlistTracks.length)
-                        ];
+                    const random =
+                      playlistTracks[
+                        Math.floor(Math.random() * playlistTracks.length)
+                      ];
 
-                      playTrackById(random.id);
-                    }}
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    🔀 Shuffle
-                  </button>
-                </div>
+                    playTrackById(random.id);
+                  }}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  🔀 Shuffle
+                </button>
               </div>
             </div>
+          </div>
 
             <TrackList
               tracks={tracks.filter((t) => playlistTrackIds.has(t.id))}
