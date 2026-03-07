@@ -2303,16 +2303,7 @@ function TrackList({
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id;
         const isFav = favIds.has(t.id);
-
-        let pressTimer: any = null;
-
-        function startPress() {
-          pressTimer = setTimeout(() => onOpenTrackMenu(t), 420);
-        }
-
-        function endPress() {
-          if (pressTimer) clearTimeout(pressTimer);
-        }
+    
 
         return (
           <div
@@ -2333,16 +2324,7 @@ function TrackList({
           >
             <button
               onClick={() => onPlay(t.id)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                onOpenTrackMenu(t);
-              }}
-              onTouchStart={startPress}
-              onTouchEnd={endPress}
-              onTouchCancel={endPress}
-              onMouseDown={startPress}
-              onMouseUp={endPress}
-              onMouseLeave={endPress}
+              
               style={{
                 all: "unset",
                 cursor: "pointer",
