@@ -517,37 +517,26 @@ if (!supabase) return;
       setIsPlaying(false);
     }
   }
-
-  function seekFromClientX(
-  e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>,
-  element: HTMLDivElement
-) {
-  const rect = element.getBoundingClientRect();
-  const clientX = "clientX" in e ? e.clientX : 0;
-  const percent = (clientX - rect.left) / rect.width;
-  seekTo(percent);
-}
-
+  
 function seekFromClientX(clientX: number, element: HTMLDivElement) {
   const rect = element.getBoundingClientRect();
   const percent = (clientX - rect.left) / rect.width;
   seekTo(percent);
 }
 
-function handleSeekStart(
-  e: React.PointerEvent<HTMLDivElement>
-) {
-  const el = e.currentTarget;
-  el.setPointerCapture?.(e.pointerId);
+function handleSeekStart(e: any) {
+  const el = e.currentTarget as HTMLDivElement;
+  if (el.setPointerCapture) {
+    el.setPointerCapture(e.pointerId);
+  }
   setIsSeeking(true);
   seekFromClientX(e.clientX, el);
 }
 
-function handleSeekMove(
-  e: React.PointerEvent<HTMLDivElement>
-) {
+function handleSeekMove(e: any) {
   if (!isSeeking) return;
-  seekFromClientX(e.clientX, e.currentTarget);
+  const el = e.currentTarget as HTMLDivElement;
+  seekFromClientX(e.clientX, el);
 }
 
 function handleSeekEnd() {
@@ -1524,10 +1513,10 @@ function handleSeekEnd() {
                 {currentTrack.artist}
               </div>
             </div>
-
-            {/* Progress */}
-            <div style={{ marginTop: 18 }}>
-             <div
+          
+           {/* Progress */}
+          <div style={{ marginTop: 18 }}>
+            <div
               onPointerDown={handleSeekStart}
               onPointerMove={handleSeekMove}
               onPointerUp={handleSeekEnd}
@@ -1551,29 +1540,21 @@ function handleSeekEnd() {
                 }}
               />
             </div>
-                <div
-                  style={{
-                    height: "100%",
-                    width: dur ? `${(pos / dur) * 100}%` : "0%",
-                    background: "rgba(59,130,246,0.95)",
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 12,
-                  opacity: 0.75,
-                  marginTop: 8,
-                }}
-              >
-                <span>{formatTime(pos)}</span>
-                <span>{formatTime(dur)}</span>
-              </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12,
+                opacity: 0.75,
+                marginTop: 8,
+              }}
+            >
+              <span>{formatTime(pos)}</span>
+              <span>{formatTime(dur)}</span>
             </div>
+          </div>
 
             {/* Controls (fullscreen can keep shuffle/repeat) */}
             <div
