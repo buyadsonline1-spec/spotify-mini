@@ -96,7 +96,7 @@ useEffect(() => {
   if (savedPlan === "free" || savedPlan === "unlimited") setPlan(savedPlan);
 }, []);
 
-async function savePlaylistName() {
+   async function savePlaylistName() {
   if (!supabase || !openedPlaylist) return;
 
   const name = playlistNameDraft.trim();
@@ -384,6 +384,7 @@ if (!currentTrackId && normalized.length > 0) {
     cover_url: p.cover_url ?? null,
   }))
 );
+}
 
   async function handleUploadTrack() {
   if (!supabase) return;
