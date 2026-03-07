@@ -571,6 +571,8 @@ if (!supabase) return;
     boxShadow: UI.shadow,
   };
 
+  const activeCover = playerMounted || isPlaying ? currentTrack?.cover_url : null;
+
   // --- UI constants ---
 
 
@@ -589,32 +591,32 @@ if (!supabase) return;
       overflow: "hidden",
 
       // твой динамический фон (если используешь bgStyle)
-      ...(typeof bgStyle === "function" ? bgStyle(currentTrack?.cover_url) : {}),
+     ...(typeof bgStyle === "function" ? bgStyle(activeCover) : {}),
     }}
   >
     {/* blurred cover layer (всегда СНИЗУ) */}
-    {currentTrack?.cover_url && (
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          backgroundImage:
-            typeof coverBg === "function"
-              ? coverBg(currentTrack.cover_url)
-              : `url(${currentTrack.cover_url})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          filter: "blur(40px) saturate(1.2)",
-          transform: "scale(1.15)",
-          opacity: 0.35,
-          transition: "opacity 350ms ease",
-        }}
-      />
-    )}
+    {activeCover && (
+    <div
+      aria-hidden
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+        backgroundImage:
+          typeof coverBg === "function"
+            ? coverBg(activeCover)
+            : `url(${activeCover})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        filter: "blur(40px) saturate(1.2)",
+        transform: "scale(1.15)",
+        opacity: 0.35,
+        transition: "opacity 350ms ease",
+      }}
+    />
+  )}
 
     {/* градиент-слой (тоже СНИЗУ) */}
     <div
