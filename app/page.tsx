@@ -1123,33 +1123,104 @@ function handleSeekEnd() {
               {playlists.length === 0 ? (
                 <div style={{ opacity: 0.75 }}>Плейлистов пока нет.</div>
               ) : (
-                playlists.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => openPlaylist(p)}
+                          <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
+            {playlists.map((p) => {
+              const playlistTracks = tracks.filter((t) =>
+                playlistTrackIds.has(t.id)
+              );
+
+              const covers = playlistTracks
+                .slice(0, 4)
+                .map((t) => t.cover_url)
+                .filter(Boolean);
+
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => openPlaylist(p)}
+                  style={{
+                    display: "flex",
+                    gap: 14,
+                    padding: 12,
+                    borderRadius: 18,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.05)",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  {/* COVER */}
+                  <div
                     style={{
-                      textAlign: "left",
-                      padding: 12,
-                      borderRadius: 16,
-                      border:
-                        activePlaylistId === p.id
-                          ? "1px solid rgba(59,130,246,0.55)"
-                          : "1px solid rgba(255,255,255,0.08)",
-                      background:
-                        activePlaylistId === p.id
-                          ? "rgba(59,130,246,0.10)"
-                          : "rgba(255,255,255,0.04)",
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontWeight: 900,
+                      width: 64,
+                      height: 64,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gridTemplateRows: "1fr 1fr",
+                      background: "rgba(255,255,255,0.08)",
                     }}
                   >
-                    {p.name}
-                  </button>
-                ))
-              )}
-            </div>
+                    {covers.length > 0 ? (
+                      covers.map((c, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            background: `url(${c}) center/cover`,
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <div
+                        style={{
+                          gridColumn: "1 / span 2",
+                          gridRow: "1 / span 2",
+                          display: "grid",
+                          placeItems: "center",
+                          fontSize: 18,
+                          opacity: 0.6,
+                        }}
+                      >
+                        ♪
+                      </div>
+                    )}
+                  </div>
 
+                  {/* INFO */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 900 }}>{p.name}</div>
+                    <div style={{ fontSize: 12, opacity: 0.7 }}>
+                      {playlistTracks.length} tracks
+                    </div>
+                  </div>
+
+                  {/* PLAY */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!playlistTracks.length) return;
+                      playTrackById(playlistTracks[0].id);
+                    }}
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 999,
+                      border: "none",
+                      background: "rgba(59,130,246,0.95)",
+                      color: "#000",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+      </div>
+      
             {activePlaylistId && (
               <div style={{ marginTop: 16 }}>
                 <div
