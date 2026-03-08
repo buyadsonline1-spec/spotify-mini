@@ -49,6 +49,8 @@ function bgStyle(cover?: string | null) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const supabase = useMemo(() => {
   if (typeof window === "undefined") return null;
 
@@ -103,19 +105,7 @@ useEffect(() => {
   if (savedPlan === "free" || savedPlan === "unlimited") setPlan(savedPlan);
 }, []);
 
-{tab === "home" && (
-  <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
-    {popularLoading ? (
-      <div style={{ padding: 16, opacity: 0.7 }}>Загрузка популярных треков...</div>
-    ) : (
-      <>
-        {renderPopularSection("Топ за день", popularDay)}
-        {renderPopularSection("Топ за неделю", popularWeek)}
-        {renderPopularSection("Топ за месяц", popularMonth)}
-      </>
-    )}
-  </div>
-)}
+
 
    async function savePlaylistName() {
   if (!supabase || !openedPlaylist) return;
@@ -183,6 +173,20 @@ async function loadPopularTracks() {
 useEffect(() => {
   loadPopularTracks();
 }, []);
+
+{tab === "home" && (
+  <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
+    {popularLoading ? (
+      <div style={{ padding: 16, opacity: 0.7 }}>Загрузка популярных треков...</div>
+    ) : (
+      <>
+        {renderPopularSection("Топ за день", popularDay)}
+        {renderPopularSection("Топ за неделю", popularWeek)}
+        {renderPopularSection("Топ за месяц", popularMonth)}
+      </>
+    )}
+  </div>
+)}
 
 function renderPopularSection(title: string, items: PopularTrack[]) {
   return (
