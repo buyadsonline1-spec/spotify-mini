@@ -1203,7 +1203,7 @@ function openCurrentTrackMenu() {
 
 
       {/* Header */}
-      <div style={{ fontSize: 12, opacity: 0.5 }}>build test 15:30</div>
+
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
         
         <div
@@ -1215,7 +1215,7 @@ function openCurrentTrackMenu() {
           }}
         >
           <div>
-            <div style={{ fontSize: 26, fontWeight: 900 }}>pokoro</div>
+            <div style={{ fontSize: 26, fontWeight: 900 }}>Music Base</div>
             <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
               {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
             </div>
