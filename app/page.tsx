@@ -249,26 +249,7 @@ async function applyReferral(currentUserId: string) {
   }
 }
 
-useEffect(() => {
-  if (!userId) return;
 
-  (async () => {
-    const p = await ensureProfile(userId);
-    if (!p) return;
-
-    await applyReferral(userId);
-
-    const { data: refreshed, error } = await supabase!
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (!error && refreshed) {
-      setProfile(refreshed as Profile);
-    }
-  })();
-}, [userId]);
 
 async function canPlayTrack() {
   if (!profile) return true;
@@ -429,7 +410,7 @@ function renderPopularSection(title: string, items: PopularTrack[]) {
           items.map((track) => (
             <div
               key={track.id}
-              onClick={() => playTrack(track)}
+              onClick={() => playTrackById(track.id)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -584,6 +565,27 @@ const currentTrack = useMemo(
 
   // userId for favorites/playlists: tg:<id> or guest:<random>
   const [userId, setUserId] = useState<string>("");
+
+  useEffect(() => {
+  if (!userId) return;
+
+  (async () => {
+    const p = await ensureProfile(userId);
+    if (!p) return;
+
+    await applyReferral(userId);
+
+    const { data: refreshed, error } = await supabase!
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!error && refreshed) {
+      setProfile(refreshed as Profile);
+    }
+  })();
+}, [userId]);
 
   // favorites set
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
