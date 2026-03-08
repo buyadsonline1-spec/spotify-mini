@@ -91,6 +91,7 @@ export default function Home() {
   const [popularDay, setPopularDay] = useState<PopularTrack[]>([]);
   const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
   const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
+  const [topsTab, setTopsTab] = useState<"day" | "week" | "month">("day");
   const [popularLoading, setPopularLoading] = useState(true);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
   const [trackMenuTrack, setTrackMenuTrack] = useState<Track | null>(null);
@@ -108,6 +109,12 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
   const [plan, setPlan] = useState<"free" | "unlimited">("free");
+  const currentTopTracks = useMemo<Track[]>(() => {
+  if (topsTab === "day") return popularDay;
+  if (topsTab === "week") return popularWeek;
+  return popularMonth;
+}, [topsTab, popularDay, popularWeek, popularMonth]);
+
   // --- persist playsCount + plan ---
   useEffect(() => {
   if (!openedPlaylist) {
