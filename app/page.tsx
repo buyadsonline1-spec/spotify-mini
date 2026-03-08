@@ -1369,23 +1369,50 @@ function openCurrentTrackMenu() {
 
         {/* Search only on Home */}
         {tab === "home" && (
-          <div style={{ marginTop: 14 }}>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск трека или артиста…"
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,0.10)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                outline: "none",
-              }}
-            />
-          </div>
-        )}
+  <div style={{ marginTop: 14, position: "relative" }}>
+    <input
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      placeholder="Поиск трека или артиста…"
+      style={{
+        width: "100%",
+        padding: "12px 44px 12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        outline: "none",
+      }}
+    />
+
+    {query && (
+      <button
+        onClick={() => setQuery("")}
+        style={{
+          position: "absolute",
+          right: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 28,
+          height: 28,
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.08)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+          display: "grid",
+          placeItems: "center",
+          padding: 0,
+        }}
+        aria-label="Очистить поиск"
+        title="Очистить поиск"
+      >
+        ✕
+      </button>
+    )}
+  </div>
+)}
       </div>
 
        {/* Content */}
