@@ -143,6 +143,14 @@ type PopularTrack = Track & {
 async function loadPopularTracks() {
   setPopularLoading(true);
 
+  if (!supabase) {
+  setPopularDay([]);
+  setPopularWeek([]);
+  setPopularMonth([]);
+  setPopularLoading(false);
+  return;
+}
+
   const [dayRes, weekRes, monthRes] = await Promise.all([
     supabase.rpc("get_popular_tracks", {
       period: "1 day",
@@ -755,7 +763,9 @@ if (!supabase) return;
   function playTrackById(id: string) {
     // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
 
-    async function registerPlay(trackId: string) {
+async function registerPlay(trackId: string) {
+  if (!supabase) return;
+
   const { error } = await supabase.from("track_plays").insert({
     track_id: trackId,
   });
