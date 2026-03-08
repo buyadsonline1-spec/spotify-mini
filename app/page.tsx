@@ -669,54 +669,89 @@ const currentTrack = useMemo(
 
 {tab === "tops" && (
   <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 14,
+  }}
+>
+  <button
+    onClick={() => setTab("home")}
     style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
+      padding: "10px 12px",
+      borderRadius: 14,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 900,
     }}
   >
-    <div
+    ← Назад
+  </button>
+
+  <div style={{ fontSize: 18, fontWeight: 900 }}>
+    {topsTab === "day"
+      ? "Топ за день"
+      : topsTab === "week"
+      ? "Топ за неделю"
+      : "Топ за месяц"}
+  </div>
+
+  {topsTab === "day" && (
+    <button
+      onClick={() => setTopsTab("week")}
       style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 14,
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
       }}
     >
-      <button
-        onClick={() => setTab("home")}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-        }}
-      >
-        ← Назад
-      </button>
+      Неделя →
+    </button>
+  )}
 
-      <div style={{ fontSize: 18, fontWeight: 900 }}>Топы</div>
-      <div style={{ width: 72 }} />
-    </div>
+  {topsTab === "week" && (
+    <button
+      onClick={() => setTopsTab("month")}
+      style={{
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+      }}
+    >
+      Месяц →
+    </button>
+  )}
 
-    {popularLoading ? (
-      <div style={{ padding: 16, opacity: 0.7 }}>
-        Загрузка популярных треков...
-      </div>
-    ) : (
-      <>
-        {renderPopularSection("Топ за день", popularDay)}
-        {renderPopularSection("Топ за неделю", popularWeek)}
-        {renderPopularSection("Топ за месяц", popularMonth)}
-      </>
-    )}
-  </div>
-)}
+  {topsTab === "month" && (
+    <button
+      onClick={() => setTopsTab("week")}
+      style={{
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+      }}
+    >
+      ← Неделя
+    </button>
+  )}
+</div>
+
 
 {tab === "genres" && (
   <div
