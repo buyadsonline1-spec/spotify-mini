@@ -63,9 +63,9 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
-  const [popularDay, setPopularDay] = useState<Track[]>([]);
-  const [popularWeek, setPopularWeek] = useState<Track[]>([]);
-  const [popularMonth, setPopularMonth] = useState<Track[]>([]);
+  const [popularDay, setPopularDay] = useState<PopularTrack[]>([]);
+  const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
+  const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
   const [popularLoading, setPopularLoading] = useState(true);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
@@ -147,6 +147,10 @@ useEffect(() => {
   );
 }
 
+type PopularTrack = Track & {
+  plays?: number;
+};
+
 async function loadPopularTracks() {
   setPopularLoading(true);
 
@@ -180,79 +184,103 @@ useEffect(() => {
   loadPopularTracks();
 }, []);
 
-function renderPopularSection(
-  title: string,
-  items: Track[]
-) {
+function renderPopularSection(title: string, items: PopularTrack[]) {
   return (
-    <div
-  style={{
-    display: "flex",
-    gap: 12,
-    overflowX: "auto",
-    padding: "0 16px 4px",
-  }}
->
-  {items.map((track) => (
-    <div
-      key={track.id}
-      onClick={() => playTrack(track)}
-      style={{
-        minWidth: 150,
-        maxWidth: 150,
-        cursor: "pointer",
-        flex: "0 0 auto",
-      }}
-    >
+    <div style={{ marginTop: 24 }}>
       <div
         style={{
-          width: 150,
-          height: 150,
-          borderRadius: 18,
-          background: track.cover_url
-            ? `url(${track.cover_url}) center/cover no-repeat`
-            : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
-        }}
-      />
-      <div
-        style={{
-          marginTop: 8,
-          fontWeight: 800,
-          fontSize: 13,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          fontSize: 20,
+          fontWeight: 900,
+          marginBottom: 12,
+          padding: "0 16px",
         }}
       >
-        {track.title}
+        {title}
       </div>
-      <div
-        style={{
-          marginTop: 2,
-          opacity: 0.65,
-          fontSize: 12,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {track.artist}
+
+      <div style={{ display: "grid", gap: 10, padding: "0 16px" }}>
+        {items.length === 0 ? (
+          <div
+            style={{
+              opacity: 0.6,
+              fontSize: 14,
+              padding: "10px 0",
+            }}
+          >
+            Пока нет данных
+          </div>
+        ) : (
+          items.map((track) => (
+            <div
+              key={track.id}
+              onClick={() => playTrack(track)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: 10,
+                borderRadius: 16,
+                background: "rgba(255,255,255,0.04)",
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 14,
+                  background: track.cover_url
+                    ? `url(${track.cover_url}) center/cover no-repeat`
+                    : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
+                  flex: "0 0 auto",
+                }}
+              />
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {track.title}
+                </div>
+
+                <div
+                  style={{
+                    opacity: 0.7,
+                    fontSize: 12,
+                    marginTop: 2,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {track.artist}
+                </div>
+              </div>
+
+              {typeof track.plays === "number" ? (
+                <div
+                  style={{
+                    fontSize: 12,
+                    opacity: 0.6,
+                    fontWeight: 700,
+                  }}
+                >
+                  {track.plays}
+                </div>
+              ) : null}
+            </div>
+          ))
+        )}
       </div>
     </div>
-  ))}
-</div>
-
-              {typeof (track as any).plays === "number" ? (
-  <div
-    style={{
-      fontSize: 12,
-      opacity: 0.6,
-      fontWeight: 700,
-    }}
-  >
-    {(track as any).plays}
-  </div>
-) : null}
+  );
+}
 
 async function uploadPlaylistCover() {
   if (!supabase || !openedPlaylist || !playlistCoverFile) return;
