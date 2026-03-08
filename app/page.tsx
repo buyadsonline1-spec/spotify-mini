@@ -1166,7 +1166,7 @@ function handleSeekEnd() {
 
   function closePlayer() {
     setPlayerClosing(true);
-    setTimeout(() => setPlayerMounted(false), 260);
+    setTimeout(() => setPlayerMounted(false), 180);
   }
 
   function openPlaylistMenu(track: Track) {
@@ -2438,7 +2438,7 @@ function openCurrentTrackMenu() {
       backgroundImage: `url(${currentTrack.cover_url})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      filter: "blur(28px)",
+      filter: "blur(18px)",
       transform: "scale(1.2)",
       opacity: 0.35,
       zIndex: 0,
@@ -2464,7 +2464,7 @@ function openCurrentTrackMenu() {
               inset: 0,
               background: "rgba(0,0,0,0.55)",
               opacity: playerClosing ? 0 : 1,
-              transition: "opacity 260ms ease",
+              transition: "opacity 180ms ease-out",
               zIndex: 1,
             }}
           />
@@ -2482,7 +2482,7 @@ function openCurrentTrackMenu() {
               display: "flex",
               flexDirection: "column",
               transform: playerClosing ? "translateY(100%)" : "translateY(0%)",
-              transition: "transform 260ms ease",
+              transition: "transform 180ms ease-out",
               willChange: "transform",
             }}
           >
