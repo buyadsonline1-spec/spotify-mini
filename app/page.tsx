@@ -1323,9 +1323,15 @@ function openCurrentTrackMenu() {
   </div>
 )}
 
-  {tab === "favorites" && (
-    <>
-      <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
+ {tab === "favorites" && (
+  <>
+    <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
+
+    {favoriteTracks.length === 0 ? (
+      <div style={{ opacity: 0.7, padding: 12 }}>
+        Нет избранных треков
+      </div>
+    ) : (
       <TrackList
         tracks={favoriteTracks}
         currentTrackId={currentTrackId}
@@ -1333,8 +1339,9 @@ function openCurrentTrackMenu() {
         onPlay={(id) => playTrackById(id)}
         onOpenTrackMenu={(track) => openTrackMenu(track)}
       />
-    </>
-  )}
+    )}
+  </>
+)}
     
 
         {tab === "profile" && (
