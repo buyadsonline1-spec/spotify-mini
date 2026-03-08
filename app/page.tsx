@@ -1318,18 +1318,8 @@ function openCurrentTrackMenu() {
       onPlay={(id) => playTrackById(id)}
       onOpenTrackMenu={(track) => openTrackMenu(track)}
     />
+    
 
-    <div style={{ fontSize: 22, fontWeight: 900, marginTop: 24, marginBottom: 14 }}>
-      Все треки
-    </div>
-
-    <TrackList
-      tracks={filteredTracks}
-      currentTrackId={currentTrackId}
-      favIds={favIds}
-      onPlay={(id) => playTrackById(id)}
-      onOpenTrackMenu={(track) => openTrackMenu(track)}
-    />
   </div>
 )}
 
