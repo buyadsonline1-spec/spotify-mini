@@ -49,7 +49,7 @@ function bgStyle(cover?: string | null) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const supabase = useMemo(() => {
   if (typeof window === "undefined") return null;
@@ -766,7 +766,7 @@ if (!supabase) return;
 }
 
 async function playTrack(track: Track) {
-  setCurrentTrack(track);
+  setCurrentTrackId(track.id);
   setHasStartedPlayback(true);
   setIsPlaying(true);
 
