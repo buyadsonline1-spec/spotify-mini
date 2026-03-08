@@ -69,7 +69,6 @@ export default function Home() {
   const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
   const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
   const [popularLoading, setPopularLoading] = useState(true);
-  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
   const [trackMenuTrack, setTrackMenuTrack] = useState<Track | null>(null);
   const [playlistNameDraft, setPlaylistNameDraft] = useState("");
