@@ -674,163 +674,7 @@ const currentTrack = useMemo(
   setTracks(normalized);
 }
 
-{tab === "tops" && (
-  <div
-    style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
-      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
-      <button
-        onClick={() => setTab("home")}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-        }}
-      >
-        ← Назад
-      </button>
 
-      <div style={{ fontSize: 18, fontWeight: 900 }}>
-        {topsTab === "day"
-          ? "Топ за день"
-          : topsTab === "week"
-          ? "Топ за неделю"
-          : "Топ за месяц"}
-      </div>
-
-      {topsTab === "day" ? (
-        <button
-          onClick={() => setTopsTab("week")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          Неделя →
-        </button>
-      ) : topsTab === "week" ? (
-        <button
-          onClick={() => setTopsTab("month")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          Месяц →
-        </button>
-      ) : (
-        <button
-          onClick={() => setTopsTab("week")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          ← Неделя
-        </button>
-      )}
-    </div>
-
-    {popularLoading ? (
-      <div style={{ padding: 16, opacity: 0.7 }}>
-        Загрузка популярных треков...
-      </div>
-    ) : currentTopTracks.length === 0 ? (
-      <div style={{ opacity: 0.7, padding: 12 }}>
-        Пока нет данных
-      </div>
-    ) : (
-      <TrackList
-        tracks={currentTopTracks}
-        currentTrackId={currentTrackId}
-        favIds={favIds}
-        onPlay={(id) => playTrackById(id)}
-        onOpenTrackMenu={(track) => openTrackMenu(track)}
-      />
-    )}
-  </div>
-)}
-
-
-{tab === "genres" && (
-  <div
-    style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
-      <button
-        onClick={() => setTab("home")}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-        }}
-      >
-        ← Назад
-      </button>
-
-      <div style={{ fontSize: 18, fontWeight: 900 }}>Жанры</div>
-      <div style={{ width: 72 }} />
-    </div>
-
-    <div style={{ display: "grid", gap: 24 }}>
-      {renderPopularSection("Pop", tracks)}
-      {renderPopularSection("Rock", tracks)}
-      {renderPopularSection("Hip-Hop", tracks)}
-      {renderPopularSection("Electronic", tracks)}
-      {renderPopularSection("Lo-fi", tracks)}
-    </div>
-  </div>
-)}
 
   // --- favorites + playlists ---
   useEffect(() => {
@@ -1595,6 +1439,194 @@ function openCurrentTrackMenu() {
     
   </div>
 )}
+
+{tab === "tops" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>
+        {topsTab === "day"
+          ? "Топ за день"
+          : topsTab === "week"
+          ? "Топ за неделю"
+          : "Топ за месяц"}
+      </div>
+
+      {topsTab === "day" ? (
+        <button
+          onClick={() => setTopsTab("week")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Неделя →
+        </button>
+      ) : topsTab === "week" ? (
+        <button
+          onClick={() => setTopsTab("month")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Месяц →
+        </button>
+      ) : (
+        <button
+          onClick={() => setTopsTab("week")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          ← Неделя
+        </button>
+      )}
+    </div>
+
+    {popularLoading ? (
+      <div style={{ padding: 16, opacity: 0.7 }}>
+        Загрузка популярных треков...
+      </div>
+   ) : currentTopTracks.length === 0 ? (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.04)",
+      textAlign: "center",
+    }}
+  >
+    <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>
+      Пока нет данных
+    </div>
+
+    <div style={{ opacity: 0.75, marginBottom: 14, lineHeight: 1.5 }}>
+      Стань первым — послушай трек!
+    </div>
+
+    <button
+      onClick={() => setTab("home")}
+      style={{
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "none",
+        background: "rgba(59,130,246,0.95)",
+        color: "#000",
+        fontWeight: 900,
+        cursor: "pointer",
+      }}
+    >
+      Случайные треки
+    </button>
+  </div>
+) : (
+      <TrackList
+        tracks={currentTopTracks}
+        currentTrackId={currentTrackId}
+        favIds={favIds}
+        onPlay={(id) => playTrackById(id)}
+        onOpenTrackMenu={(track) => openTrackMenu(track)}
+      />
+    )}
+  </div>
+)}
+
+
+{tab === "genres" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>Жанры</div>
+      <div style={{ width: 72 }} />
+    </div>
+
+    <div style={{ display: "grid", gap: 24 }}>
+      {renderPopularSection("Pop", tracks)}
+      {renderPopularSection("Rock", tracks)}
+      {renderPopularSection("Hip-Hop", tracks)}
+      {renderPopularSection("Electronic", tracks)}
+      {renderPopularSection("Lo-fi", tracks)}
+    </div>
+  </div>
+)}
+
 
  {tab === "favorites" && (
   <>
