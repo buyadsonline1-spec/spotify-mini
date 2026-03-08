@@ -488,18 +488,21 @@ function renderPopularSection(title: string, items: PopularTrack[]) {
 }
 
 
-async function uploadPlaylistCover() {
-  if (!supabase || !openedPlaylist || !playlistCoverFile) return;
+async function uploadPlaylistCover(file?: File) {
+  if (!supabase || !openedPlaylist) return;
+
+  const coverFile = file ?? playlistCoverFile;
+  if (!coverFile) return;
 
   try {
     setIsSavingPlaylist(true);
 
-    const ext = playlistCoverFile.name.split(".").pop() || "jpg";
+    const ext = coverFile.name.split(".").pop() || "jpg";
     const path = `playlist-cover/${openedPlaylist.id}-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("playlist-covers")
-      .upload(path, playlistCoverFile, {
+      .upload(path, coverFile, {
         cacheControl: "3600",
         upsert: true,
       });
@@ -529,11 +532,12 @@ async function uploadPlaylistCover() {
     setPlaylistCoverFile(null);
   } catch (e) {
     console.error("uploadPlaylistCover error:", e);
-    alert("Не удалось загрузить аватарку");
+    alert("Не удалось загрузить обложку");
   } finally {
     setIsSavingPlaylist(false);
   }
 }
+    
 
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -2056,17 +2060,49 @@ function openCurrentTrackMenu() {
     </>
   )}
 
-  <input
-    type="file"
-    accept="image/*"
-    style={{ display: "none" }}
-    onChange={(e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setPlaylistCoverFile(file);
-      uploadPlaylistCover();
-    }}
-  />
+  <div style={{ minWidth: 0 }}>
+  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+    <input
+      value={playlistNameDraft}
+      onChange={(e) => setPlaylistNameDraft(e.target.value)}
+      placeholder="Название плейлиста"
+      style={{
+        flex: 1,
+        width: "100%",
+        padding: "12px 14px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        color: "#fff",
+        outline: "none",
+        fontSize: 18,
+        fontWeight: 900,
+      }}
+    />
+
+    <button
+      onClick={savePlaylistName}
+      disabled={isSavingPlaylist || !playlistNameDraft.trim()}
+      style={{
+        padding: "12px 14px",
+        borderRadius: 14,
+        border: "none",
+        background: "rgba(59,130,246,0.95)",
+        color: "#000",
+        fontWeight: 900,
+        cursor: isSavingPlaylist ? "default" : "pointer",
+        opacity: isSavingPlaylist ? 0.6 : 1,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {isSavingPlaylist ? "..." : "Сохранить"}
+    </button>
+  </div>
+
+  <div style={{ opacity: 0.7, marginTop: 8 }}>
+    {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
+  </div>
+</div>
 </label>
 
   {/* right side */}
@@ -2074,6 +2110,11 @@ function openCurrentTrackMenu() {
     <input
       value={playlistNameDraft}
       onChange={(e) => setPlaylistNameDraft(e.target.value)}
+      onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    savePlaylistName();
+  }
+}}
       placeholder="Название плейлиста"
       style={{
         width: "100%",
@@ -2279,11 +2320,16 @@ function openCurrentTrackMenu() {
                   ? `Cover: ${uploadCoverFile.name}`
                   : "Выбрать обложку (необязательно)"}
                 <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => setUploadCoverFile(e.target.files?.[0] ?? null)}
-                />
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setPlaylistCoverFile(file);
+                      uploadPlaylistCover(file);
+                    }}
+                  />
               </label>
 
               <Btn
