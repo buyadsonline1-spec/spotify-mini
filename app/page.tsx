@@ -2043,66 +2043,39 @@ function openCurrentTrackMenu() {
       ? `url(${openedPlaylist.cover_url}) center/cover no-repeat`
       : "rgba(255,255,255,0.08)",
     display: "flex",
-    flexDirection: "column",
+
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 22,
+    
     cursor: "pointer",
     overflow: "hidden",
     border: "1px solid rgba(255,255,255,0.08)",
-    gap: 4,
+    position: "relative",
   }}
 >
   {!openedPlaylist.cover_url && (
-    <>
-      <div style={{ fontSize: 24 }}>+</div>
-      <div style={{ fontSize: 11, opacity: 0.7 }}>Добавить</div>
-    </>
-  )}
-
-  <div style={{ minWidth: 0 }}>
-  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-    <input
-      value={playlistNameDraft}
-      onChange={(e) => setPlaylistNameDraft(e.target.value)}
-      placeholder="Название плейлиста"
+    <div
       style={{
-        flex: 1,
-        width: "100%",
-        padding: "12px 14px",
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        outline: "none",
-        fontSize: 18,
-        fontWeight: 900,
-      }}
-    />
-
-    <button
-      onClick={savePlaylistName}
-      disabled={isSavingPlaylist || !playlistNameDraft.trim()}
-      style={{
-        padding: "12px 14px",
-        borderRadius: 14,
-        border: "none",
-        background: "rgba(59,130,246,0.95)",
-        color: "#000",
-        fontWeight: 900,
-        cursor: isSavingPlaylist ? "default" : "pointer",
-        opacity: isSavingPlaylist ? 0.6 : 1,
-        whiteSpace: "nowrap",
+        fontSize: 28,
+        fontWeight: 700,
+        opacity: 0.7,
       }}
     >
-      {isSavingPlaylist ? "..." : "Сохранить"}
-    </button>
-  </div>
+      +
+    </div>
+  )}
 
-  <div style={{ opacity: 0.7, marginTop: 8 }}>
-    {tracks.filter((t) => playlistTrackIds.has(t.id)).length} tracks
-  </div>
-</div>
+  <input
+    type="file"
+    accept="image/*"
+    style={{ display: "none" }}
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPlaylistCoverFile(file);
+      uploadPlaylistCover(file);
+    }}
+  />
 </label>
 
   {/* right side */}
