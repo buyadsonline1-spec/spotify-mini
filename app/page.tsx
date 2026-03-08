@@ -32,6 +32,15 @@ type PopularTrack = Track & {
   plays?: number;
 };
 
+type Profile = {
+  id: string;
+  plan: "free" | "unlimited";
+  plays_used: number;
+  invite_code: string | null;
+  invited_by: string | null;
+  referrals_count: number;
+};
+
 function formatTime(sec: number) {
   if (!Number.isFinite(sec) || sec < 0) return "0:00";
   const m = Math.floor(sec / 60);
@@ -77,6 +86,8 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [showInvitePaywall, setShowInvitePaywall] = useState(false);
   const [popularDay, setPopularDay] = useState<PopularTrack[]>([]);
   const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
   const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
@@ -117,6 +128,178 @@ useEffect(() => {
 }, []);
 
 
+function generateInviteCode(userId: string) {
+  const clean = userId.replace(/[^a-zA-Z0-9]/g, "").slice(-6);
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `PKR${clean}${rand}`.slice(0, 12);
+}
+
+async function ensureProfile(currentUserId: string) {
+  if (!supabase || !currentUserId) return null;
+
+  const { data: existing, error: loadError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", currentUserId)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("load profile error:", loadError);
+    return null;
+  }
+
+  if (existing) {
+    setProfile(existing as Profile);
+    return existing as Profile;
+  }
+
+  const inviteCode = generateInviteCode(currentUserId);
+
+  const { data: created, error: createError } = await supabase
+    .from("profiles")
+    .insert({
+      id: currentUserId,
+      plan: "free",
+      plays_used: 0,
+      invite_code: inviteCode,
+      invited_by: null,
+      referrals_count: 0,
+    })
+    .select("*")
+    .single();
+
+  if (createError) {
+    console.error("create profile error:", createError);
+    return null;
+  }
+
+  setProfile(created as Profile);
+  return created as Profile;
+}
+
+async function applyReferral(currentUserId: string) {
+  if (!supabase || !currentUserId) return;
+
+  const tg = typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
+  const startParam = tg?.initDataUnsafe?.start_param as string | undefined;
+
+  if (!startParam || !startParam.startsWith("ref_")) return;
+
+  const inviteCode = startParam.replace("ref_", "").trim();
+  if (!inviteCode) return;
+
+  const { data: me, error: meError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", currentUserId)
+    .single();
+
+  if (meError || !me) {
+    console.error("applyReferral load me error:", meError);
+    return;
+  }
+
+  if (me.invited_by) return;
+
+  const { data: inviter, error: inviterError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("invite_code", inviteCode)
+    .maybeSingle();
+
+  if (inviterError || !inviter) {
+    console.error("applyReferral inviter error:", inviterError);
+    return;
+  }
+
+  if (inviter.id === currentUserId) return;
+
+  const nextCount = (inviter.referrals_count ?? 0) + 1;
+  const nextPlan = nextCount >= 1 ? "unlimited" : inviter.plan;
+
+  const { error: updateMeError } = await supabase
+    .from("profiles")
+    .update({ invited_by: inviter.id })
+    .eq("id", currentUserId);
+
+  if (updateMeError) {
+    console.error("applyReferral update me error:", updateMeError);
+    return;
+  }
+
+  const { error: updateInviterError } = await supabase
+    .from("profiles")
+    .update({
+      referrals_count: nextCount,
+      plan: nextPlan,
+    })
+    .eq("id", inviter.id);
+
+  if (updateInviterError) {
+    console.error("applyReferral update inviter error:", updateInviterError);
+    return;
+  }
+
+  if (profile?.id === inviter.id) {
+    setProfile({
+      ...(profile as Profile),
+      referrals_count: nextCount,
+      plan: nextPlan as "free" | "unlimited",
+    });
+  }
+}
+
+useEffect(() => {
+  if (!userId) return;
+
+  (async () => {
+    const p = await ensureProfile(userId);
+    if (!p) return;
+
+    await applyReferral(userId);
+
+    const { data: refreshed, error } = await supabase!
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!error && refreshed) {
+      setProfile(refreshed as Profile);
+    }
+  })();
+}, [userId]);
+
+async function canPlayTrack() {
+  if (!profile) return true;
+  if (profile.plan === "unlimited") return true;
+  if (profile.plays_used < 5) return true;
+
+  setShowInvitePaywall(true);
+  return false;
+}
+
+async function incrementPlayUsage() {
+  if (!supabase || !profile) return;
+  if (profile.plan === "unlimited") return;
+
+  const next = profile.plays_used + 1;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ plays_used: next })
+    .eq("id", profile.id);
+
+  if (error) {
+    console.error("incrementPlayUsage error:", error);
+    return;
+  }
+
+  setProfile({
+    ...profile,
+    plays_used: next,
+  });
+}
 
    async function savePlaylistName() {
   if (!supabase || !openedPlaylist) return;
@@ -148,6 +331,30 @@ useEffect(() => {
   );
 }
 
+async function shareInviteLink() {
+  if (!profile?.invite_code) return;
+
+  const botUsername = "muzzoffnet_bot";
+  const inviteUrl = `https://t.me/${botUsername}?startapp=ref_${profile.invite_code}`;
+  const text = `🎵 Заходи в Pokoro по моей ссылке и слушай музыку: ${inviteUrl}`;
+
+  if (
+    typeof window !== "undefined" &&
+    (window as any).Telegram?.WebApp?.openTelegramLink
+  ) {
+    (window as any).Telegram.WebApp.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(text)}`
+    );
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(inviteUrl);
+    alert("Ссылка-приглашение скопирована");
+  } catch {
+    alert(inviteUrl);
+  }
+}
 
 
 async function loadPopularTracks() {
@@ -877,23 +1084,22 @@ if (!supabase) return;
   }
 }
 
-async function playTrack(track: Track) {
-  setCurrentTrackId(track.id);
-  setHasStartedPlayback(true);
-  setIsPlaying(true);
+async function playTrackById(id: string) {
+  const allowed = await canPlayTrack();
+  if (!allowed) return;
 
-  if (audioRef.current) {
-    audioRef.current.src = track.audio_url;
-    await audioRef.current.play();
-  }
 
-  registerPlay(track.id);
-}
-
-function playTrackById(id: string) {
   setHasStartedPlayback(true);
   setPlaysCount((c) => c + 1);
   setCurrentTrackId(id);
+
+  const current = tracks.find((t) => t.id === id);
+  if (current) {
+    registerPlay(id);
+  }
+
+  await incrementPlayUsage();
+
   setTimeout(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -1398,38 +1604,47 @@ function openCurrentTrackMenu() {
               </div>
 
               <div
+              style={{
+                padding: 14,
+                borderRadius: 18,
+                border: "1px solid rgba(59,130,246,0.30)",
+                background:
+                  "radial-gradient(500px 180px at 20% 0%, rgba(59,130,246,0.25), rgba(255,255,255,0.04))",
+              }}
+            >
+              <div
                 style={{
-                  padding: 14,
-                  borderRadius: 18,
-                  border: "1px solid rgba(59,130,246,0.30)",
-                  background:
-                    "radial-gradient(500px 180px at 20% 0%, rgba(59,130,246,0.25), rgba(255,255,255,0.04))",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
-                      Подписка
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 900 }}>
-                      {plan === "unlimited" ? "Без ограничений ✅" : "Free"}
-                    </div>
-                    <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
-                      {plan === "unlimited"
-                        ? "Доступ ко всем функциям"
-                        : "Ограничения на некоторые функции"}
-                    </div>
+                <div>
+                  <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
+                    Подписка
                   </div>
 
+                  <div style={{ fontSize: 16, fontWeight: 900 }}>
+                    {profile?.plan === "unlimited" ? "Unlimited ✅" : "Free"}
+                  </div>
+
+                  <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
+                    {profile?.plan === "unlimited"
+                      ? `Ты пригласил ${profile.referrals_count} друга`
+                      : `Прослушано: ${profile?.plays_used ?? 0} / 5`}
+                  </div>
+
+                  {profile?.plan !== "unlimited" && (
+                    <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
+                      Пригласи 1 друга и получи безлимит
+                    </div>
+                  )}
+                </div>
+
+                {profile?.plan !== "unlimited" ? (
                   <button
-                    onClick={() => setPlan("unlimited")}
+                    onClick={shareInviteLink}
                     style={{
                       padding: "12px 14px",
                       borderRadius: 16,
@@ -1442,10 +1657,22 @@ function openCurrentTrackMenu() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Без ограничений
+                    Пригласить
                   </button>
-                </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 16,
+                      background: "rgba(255,255,255,0.08)",
+                      fontWeight: 900,
+                    }}
+                  >
+                    Активно
+                  </div>
+                )}
               </div>
+            </div>
 
               <div style={{ display: "grid", gap: 12 }}>
                 <button
@@ -2446,6 +2673,78 @@ function openCurrentTrackMenu() {
     </div>
   </div>
 )}
+
+      {showInvitePaywall && (
+        <div
+          onClick={() => setShowInvitePaywall(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 80,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "flex-end",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              padding: 16,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              background: "rgba(7,10,18,0.98)",
+              borderTop: "1px solid rgba(255,255,255,0.10)",
+            }}
+          >
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 10 }}>
+              Лимит исчерпан
+            </div>
+
+            <div style={{ opacity: 0.8, marginBottom: 14, lineHeight: 1.5 }}>
+              Ты использовал 5 из 5 прослушиваний.
+              Пригласи 1 друга в Pokoro и открой Unlimited.
+            </div>
+
+            <div style={{ opacity: 0.7, marginBottom: 14 }}>
+              Прогресс: {profile?.referrals_count ?? 0} / 1
+            </div>
+
+            <button
+              onClick={shareInviteLink}
+              style={{
+                width: "100%",
+                padding: 14,
+                borderRadius: 16,
+                border: "none",
+                background: "rgba(59,130,246,0.95)",
+                color: "#000",
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+            >
+              Пригласить друга
+            </button>
+
+            <button
+              onClick={() => setShowInvitePaywall(false)}
+              style={{
+                marginTop: 10,
+                width: "100%",
+                padding: 12,
+                borderRadius: 16,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "transparent",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Tabs */}
       <div
