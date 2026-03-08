@@ -63,6 +63,7 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
   const [trackMenuTrack, setTrackMenuTrack] = useState<Track | null>(null);
   const [playlistNameDraft, setPlaylistNameDraft] = useState("");
@@ -598,6 +599,7 @@ if (!supabase) return;
   function playTrackById(id: string) {
     // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
 
+    setHasStartedPlayback(true);
     setPlaysCount((c) => c + 1);
     setCurrentTrackId(id);
     setTimeout(() => {
@@ -1568,7 +1570,7 @@ function openCurrentTrackMenu() {
       )}
 
       {/* Bottom mini-player (click opens fullscreen) */}
-      {currentTrack && (
+      {currentTrack && hasStartedPlayback && (
         <div
           style={{
             position: "fixed",
