@@ -63,6 +63,10 @@ export default function Home() {
   return createClient(url, key);
 }, []);
 
+  const [popularDay, setPopularDay] = useState<Track[]>([]);
+  const [popularWeek, setPopularWeek] = useState<Track[]>([]);
+  const [popularMonth, setPopularMonth] = useState<Track[]>([]);
+  const [popularLoading, setPopularLoading] = useState(true);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
   const [trackMenuTrack, setTrackMenuTrack] = useState<Track | null>(null);
@@ -99,6 +103,20 @@ useEffect(() => {
   if (savedPlan === "free" || savedPlan === "unlimited") setPlan(savedPlan);
 }, []);
 
+{tab === "home" && (
+  <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
+    {popularLoading ? (
+      <div style={{ padding: 16, opacity: 0.7 }}>Загрузка популярных треков...</div>
+    ) : (
+      <>
+        {renderPopularSection("Топ за день", popularDay)}
+        {renderPopularSection("Топ за неделю", popularWeek)}
+        {renderPopularSection("Топ за месяц", popularMonth)}
+      </>
+    )}
+  </div>
+)}
+
    async function savePlaylistName() {
   if (!supabase || !openedPlaylist) return;
 
@@ -126,6 +144,120 @@ useEffect(() => {
 
   setPlaylists((prev) =>
     prev.map((p) => (p.id === openedPlaylist.id ? { ...p, name } : p))
+  );
+}
+
+async function loadPopularTracks() {
+  setPopularLoading(true);
+
+  const [dayRes, weekRes, monthRes] = await Promise.all([
+    supabase.rpc("get_popular_tracks", {
+      period: "1 day",
+      result_limit: 10,
+    }),
+    supabase.rpc("get_popular_tracks", {
+      period: "7 days",
+      result_limit: 10,
+    }),
+    supabase.rpc("get_popular_tracks", {
+      period: "30 days",
+      result_limit: 10,
+    }),
+  ]);
+
+  if (dayRes.error) console.error("popular day error", dayRes.error);
+  if (weekRes.error) console.error("popular week error", weekRes.error);
+  if (monthRes.error) console.error("popular month error", monthRes.error);
+
+  setPopularDay((dayRes.data as any[]) || []);
+  setPopularWeek((weekRes.data as any[]) || []);
+  setPopularMonth((monthRes.data as any[]) || []);
+
+  setPopularLoading(false);
+}
+
+useEffect(() => {
+  loadPopularTracks();
+}, []);
+
+function renderPopularSection(
+  title: string,
+  items: Track[]
+) {
+  return (
+    <div
+  style={{
+    display: "flex",
+    gap: 12,
+    overflowX: "auto",
+    padding: "0 16px 4px",
+  }}
+>
+  {items.map((track) => (
+    <div
+      key={track.id}
+      onClick={() => playTrack(track)}
+      style={{
+        minWidth: 150,
+        maxWidth: 150,
+        cursor: "pointer",
+        flex: "0 0 auto",
+      }}
+    >
+      <div
+        style={{
+          width: 150,
+          height: 150,
+          borderRadius: 18,
+          background: track.cover_url
+            ? `url(${track.cover_url}) center/cover no-repeat`
+            : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
+        }}
+      />
+      <div
+        style={{
+          marginTop: 8,
+          fontWeight: 800,
+          fontSize: 13,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {track.title}
+      </div>
+      <div
+        style={{
+          marginTop: 2,
+          opacity: 0.65,
+          fontSize: 12,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {track.artist}
+      </div>
+    </div>
+  ))}
+</div>
+
+              {"plays" in track && typeof (track as any).plays === "number" && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    opacity: 0.6,
+                    fontWeight: 700,
+                  }}
+                >
+                  {(track as any).plays}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -599,6 +731,28 @@ if (!supabase) return;
   function playTrackById(id: string) {
     // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
 
+    async function registerPlay(trackId: string) {
+  const { error } = await supabase.from("track_plays").insert({
+    track_id: trackId,
+  });
+
+  if (error) {
+    console.error("registerPlay error", error);
+  }
+}
+
+async function playTrack(track: Track) {
+  setCurrentTrack(track);
+  setHasStartedPlayback(true);
+  setIsPlaying(true);
+
+  if (audioRef.current) {
+    audioRef.current.src = track.audio_url;
+    await audioRef.current.play();
+  }
+
+  registerPlay(track.id);
+}
     setHasStartedPlayback(true);
     setPlaysCount((c) => c + 1);
     setCurrentTrackId(id);
