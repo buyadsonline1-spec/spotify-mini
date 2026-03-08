@@ -4,7 +4,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Tab = "home" | "favorites" | "profile" | "playlists" | "playlist" | "upload";
+type Tab =
+  | "home"
+  | "tops"
+  | "genres"
+  | "favorites"
+  | "profile"
+  | "playlists"
+  | "playlist"
+  | "upload";
 
 type Track = {
   id: string;
@@ -450,6 +458,103 @@ const currentTrack = useMemo(
   setTracks(normalized);
 }
 
+{tab === "tops" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>Топы</div>
+      <div style={{ width: 72 }} />
+    </div>
+
+    {popularLoading ? (
+      <div style={{ padding: 16, opacity: 0.7 }}>
+        Загрузка популярных треков...
+      </div>
+    ) : (
+      <>
+        {renderPopularSection("Топ за день", popularDay)}
+        {renderPopularSection("Топ за неделю", popularWeek)}
+        {renderPopularSection("Топ за месяц", popularMonth)}
+      </>
+    )}
+  </div>
+)}
+
+{tab === "genres" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>Жанры</div>
+      <div style={{ width: 72 }} />
+    </div>
+
+    <div style={{ display: "grid", gap: 24 }}>
+      {renderPopularSection("Pop", tracks)}
+      {renderPopularSection("Rock", tracks)}
+      {renderPopularSection("Hip-Hop", tracks)}
+      {renderPopularSection("Electronic", tracks)}
+      {renderPopularSection("Lo-fi", tracks)}
+    </div>
+  </div>
+)}
 
   // --- favorites + playlists ---
   useEffect(() => {
@@ -709,6 +814,16 @@ if (!supabase) return;
 }
 
   // --- lists ---
+
+  const randomTracks = useMemo(() => {
+  const arr = [...tracks];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}, [tracks]);
+
   const filteredTracks = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return tracks;
@@ -1150,20 +1265,73 @@ function openCurrentTrackMenu() {
        {/* Content */}
 <div style={{ padding: "0 20px" }}>
   {tab === "home" && (
-    <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
-      {popularLoading ? (
-        <div style={{ padding: 16, opacity: 0.7 }}>
-          Загрузка популярных треков...
-        </div>
-      ) : (
-        <>
-          {renderPopularSection("Топ за день", popularDay)}
-          {renderPopularSection("Топ за неделю", popularWeek)}
-          {renderPopularSection("Топ за месяц", popularMonth)}
-        </>
-      )}
+  <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 12,
+        marginBottom: 18,
+      }}
+    >
+      <button
+        onClick={() => setTab("tops")}
+        style={{
+          padding: "16px 14px",
+          borderRadius: 18,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          fontWeight: 900,
+          cursor: "pointer",
+          fontSize: 16,
+        }}
+      >
+        Топы
+      </button>
+
+      <button
+        onClick={() => setTab("genres")}
+        style={{
+          padding: "16px 14px",
+          borderRadius: 18,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          fontWeight: 900,
+          cursor: "pointer",
+          fontSize: 16,
+        }}
+      >
+        Жанры
+      </button>
     </div>
-  )}
+
+    <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
+      Случайные треки
+    </div>
+
+    <TrackList
+      tracks={randomTracks}
+      currentTrackId={currentTrackId}
+      favIds={favIds}
+      onPlay={(id) => playTrackById(id)}
+      onOpenTrackMenu={(track) => openTrackMenu(track)}
+    />
+
+    <div style={{ fontSize: 22, fontWeight: 900, marginTop: 24, marginBottom: 14 }}>
+      Все треки
+    </div>
+
+    <TrackList
+      tracks={filteredTracks}
+      currentTrackId={currentTrackId}
+      favIds={favIds}
+      onPlay={(id) => playTrackById(id)}
+      onOpenTrackMenu={(track) => openTrackMenu(track)}
+    />
+  </div>
+)}
 
   {tab === "favorites" && (
     <>
