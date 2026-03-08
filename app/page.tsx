@@ -1318,8 +1318,8 @@ function openCurrentTrackMenu() {
       onPlay={(id) => playTrackById(id)}
       onOpenTrackMenu={(track) => openTrackMenu(track)}
     />
-    
 
+    
   </div>
 )}
 
