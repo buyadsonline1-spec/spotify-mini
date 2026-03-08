@@ -20,6 +20,10 @@ type Playlist = {
   cover_url?: string | null;
 };
 
+type PopularTrack = Track & {
+  plays?: number;
+};
+
 function formatTime(sec: number) {
   if (!Number.isFinite(sec) || sec < 0) return "0:00";
   const m = Math.floor(sec / 60);
@@ -136,9 +140,7 @@ useEffect(() => {
   );
 }
 
-type PopularTrack = Track & {
-  plays?: number;
-};
+
 
 async function loadPopularTracks() {
   setPopularLoading(true);
@@ -181,19 +183,7 @@ useEffect(() => {
   loadPopularTracks();
 }, []);
 
-{tab === "home" && (
-  <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
-    {popularLoading ? (
-      <div style={{ padding: 16, opacity: 0.7 }}>Загрузка популярных треков...</div>
-    ) : (
-      <>
-        {renderPopularSection("Топ за день", popularDay)}
-        {renderPopularSection("Топ за неделю", popularWeek)}
-        {renderPopularSection("Топ за месяц", popularMonth)}
-      </>
-    )}
-  </div>
-)}
+
 
 function renderPopularSection(title: string, items: PopularTrack[]) {
   return (
@@ -293,6 +283,7 @@ function renderPopularSection(title: string, items: PopularTrack[]) {
   );
 }
 
+
 async function uploadPlaylistCover() {
   if (!supabase || !openedPlaylist || !playlistCoverFile) return;
 
@@ -350,11 +341,12 @@ useEffect(() => {
   localStorage.setItem("pokoro_plan", plan);
 }, [plan]);
 
-  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
-  const currentTrack = useMemo(
-    () => tracks.find((t) => t.id === currentTrackId) ?? null,
-    [tracks, currentTrackId]
-  );
+const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+
+const currentTrack = useMemo(
+  () => tracks.find((t) => t.id === currentTrackId) ?? null,
+  [tracks, currentTrackId]
+);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -456,11 +448,9 @@ useEffect(() => {
   }));
 
   setTracks(normalized);
-
-if (!currentTrackId && normalized.length > 0) {
-    setCurrentTrackId(normalized[0].id);
-  }
 }
+
+
   // --- favorites + playlists ---
   useEffect(() => {
     if (!userId) return;
@@ -760,10 +750,7 @@ if (!supabase) return;
     }, 0);
   }
 
-  function playTrackById(id: string) {
-    // при выборе трека — меняем трек и СРАЗУ пытаемся проиграть (это считается user gesture)
-
-async function registerPlay(trackId: string) {
+  async function registerPlay(trackId: string) {
   if (!supabase) return;
 
   const { error } = await supabase.from("track_plays").insert({
@@ -787,22 +774,24 @@ async function playTrack(track: Track) {
 
   registerPlay(track.id);
 }
-    setHasStartedPlayback(true);
-    setPlaysCount((c) => c + 1);
-    setCurrentTrackId(id);
-    setTimeout(() => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      audio.load();
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => {
-          console.log("play blocked:", e);
-          setIsPlaying(false);
-        });
-    }, 50);
-  }
+
+function playTrackById(id: string) {
+  setHasStartedPlayback(true);
+  setPlaysCount((c) => c + 1);
+  setCurrentTrackId(id);
+  setTimeout(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.load();
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch((e) => {
+        console.log("play blocked:", e);
+        setIsPlaying(false);
+      });
+  }, 50);
+}
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -1158,17 +1147,36 @@ function openCurrentTrackMenu() {
         )}
       </div>
 
-                {/* Content */}
-      <div style={{ padding: "0 20px" }}>
-        {tab === "home" && (
-          <TrackList
-            tracks={filteredTracks}
-            currentTrackId={currentTrackId}
-            favIds={favIds}
-            onPlay={(id) => playTrackById(id)}
-            onOpenTrackMenu={(track) => openTrackMenu(track)}
-          />
-        )}
+       {/* Content */}
+<div style={{ padding: "0 20px" }}>
+  {tab === "home" && (
+    <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
+      {popularLoading ? (
+        <div style={{ padding: 16, opacity: 0.7 }}>
+          Загрузка популярных треков...
+        </div>
+      ) : (
+        <>
+          {renderPopularSection("Топ за день", popularDay)}
+          {renderPopularSection("Топ за неделю", popularWeek)}
+          {renderPopularSection("Топ за месяц", popularMonth)}
+        </>
+      )}
+    </div>
+  )}
+
+  {tab === "favorites" && (
+    <>
+      <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
+      <TrackList
+        tracks={favoriteTracks}
+        currentTrackId={currentTrackId}
+        favIds={favIds}
+        onPlay={(id) => playTrackById(id)}
+        onOpenTrackMenu={(track) => openTrackMenu(track)}
+      />
+    </>
+  )}
 
         {tab === "favorites" && (
           <>
@@ -2360,6 +2368,7 @@ function Btn({
   };
 
   return (
+    
     <button
       onClick={onClick}
       style={{
@@ -2419,6 +2428,7 @@ function IconBtn({
   const s = primary ? prim : base;
 
   return (
+    
     <button
       onClick={onClick}
       style={{ ...s, ...style }}
@@ -2450,6 +2460,7 @@ function TabButton({
   icon: string;
 }) {
   return (
+    
     <button
       onClick={onClick}
       style={{
@@ -2489,6 +2500,7 @@ function TrackList({
   }
 
   return (
+    
     <div style={{ display: "grid", gap: 10 }}>
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id;
@@ -2496,6 +2508,7 @@ function TrackList({
     
 
         return (
+          
           <div
             key={t.id}
             style={{
