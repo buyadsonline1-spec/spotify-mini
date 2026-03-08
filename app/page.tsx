@@ -1133,17 +1133,14 @@ async function playTrackById(id: string) {
   const allowed = await canPlayTrack();
   if (!allowed) return;
 
-
+  
   setHasStartedPlayback(true);
   setPlaysCount((c) => c + 1);
   setCurrentTrackId(id);
 
-  const current = tracks.find((t) => t.id === id);
-  if (current) {
-    registerPlay(id);
-  }
-
+  
   await incrementPlayUsage();
+  await registerPlay(id);
 
   setTimeout(() => {
     const audio = audioRef.current;
