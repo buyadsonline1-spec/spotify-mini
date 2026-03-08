@@ -1335,19 +1335,7 @@ function openCurrentTrackMenu() {
       />
     </>
   )}
-
-        {tab === "favorites" && (
-          <>
-            <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
-            <TrackList
-              tracks={favoriteTracks}
-              currentTrackId={currentTrackId}
-              favIds={favIds}
-              onPlay={(id) => playTrackById(id)}
-              onOpenTrackMenu={(track) => openTrackMenu(track)}
-            />
-          </>
-        )}
+    
 
         {tab === "profile" && (
           <div
