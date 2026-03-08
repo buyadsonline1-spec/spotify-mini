@@ -751,6 +751,7 @@ const currentTrack = useMemo(
     </button>
   )}
 </div>
+)}
 
 
 {tab === "genres" && (
