@@ -676,88 +676,112 @@ const currentTrack = useMemo(
 
 {tab === "tops" && (
   <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 14,
-  }}
->
-  <button
-    onClick={() => setTab("home")}
     style={{
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.10)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#fff",
-      cursor: "pointer",
-      fontWeight: 900,
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
     }}
   >
-    ← Назад
-  </button>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
 
-  <div style={{ fontSize: 18, fontWeight: 900 }}>
-    {topsTab === "day"
-      ? "Топ за день"
-      : topsTab === "week"
-      ? "Топ за неделю"
-      : "Топ за месяц"}
+      <div style={{ fontSize: 18, fontWeight: 900 }}>
+        {topsTab === "day"
+          ? "Топ за день"
+          : topsTab === "week"
+          ? "Топ за неделю"
+          : "Топ за месяц"}
+      </div>
+
+      {topsTab === "day" ? (
+        <button
+          onClick={() => setTopsTab("week")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Неделя →
+        </button>
+      ) : topsTab === "week" ? (
+        <button
+          onClick={() => setTopsTab("month")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Месяц →
+        </button>
+      ) : (
+        <button
+          onClick={() => setTopsTab("week")}
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          ← Неделя
+        </button>
+      )}
+    </div>
+
+    {popularLoading ? (
+      <div style={{ padding: 16, opacity: 0.7 }}>
+        Загрузка популярных треков...
+      </div>
+    ) : currentTopTracks.length === 0 ? (
+      <div style={{ opacity: 0.7, padding: 12 }}>
+        Пока нет данных
+      </div>
+    ) : (
+      <TrackList
+        tracks={currentTopTracks}
+        currentTrackId={currentTrackId}
+        favIds={favIds}
+        onPlay={(id) => playTrackById(id)}
+        onOpenTrackMenu={(track) => openTrackMenu(track)}
+      />
+    )}
   </div>
-
-  {topsTab === "day" && (
-    <button
-      onClick={() => setTopsTab("week")}
-      style={{
-        padding: "10px 12px",
-        borderRadius: 14,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 900,
-      }}
-    >
-      Неделя →
-    </button>
-  )}
-
-  {topsTab === "week" && (
-    <button
-      onClick={() => setTopsTab("month")}
-      style={{
-        padding: "10px 12px",
-        borderRadius: 14,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 900,
-      }}
-    >
-      Месяц →
-    </button>
-  )}
-
-  {topsTab === "month" && (
-    <button
-      onClick={() => setTopsTab("week")}
-      style={{
-        padding: "10px 12px",
-        borderRadius: 14,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 900,
-      }}
-    >
-      ← Неделя
-    </button>
-  )}
-</div>
 )}
 
 
@@ -1138,7 +1162,7 @@ async function playTrackById(id: string) {
   setPlaysCount((c) => c + 1);
   setCurrentTrackId(id);
 
-  
+
   await incrementPlayUsage();
   await registerPlay(id);
 
