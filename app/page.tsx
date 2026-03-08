@@ -1509,7 +1509,7 @@ function openCurrentTrackMenu() {
   >
     {topsTab === "day" ? "Неделя →" : "Месяц →"}
   </button>
-</div>
+  
 
     {popularLoading ? (
       <div style={{ padding: 16, opacity: 0.7 }}>
