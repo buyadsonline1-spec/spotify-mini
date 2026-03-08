@@ -1440,115 +1440,120 @@ function openCurrentTrackMenu() {
   </div>
 )}
 
-{tab === "tops" && (
-  <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "92px 1fr 92px",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 14,
-  }}
->
-  <button
-    onClick={() => {
-      if (topsTab === "day") {
-        setTab("home");
-      } else if (topsTab === "week") {
-        setTopsTab("day");
-      } else {
-        setTopsTab("week");
-      }
-    }}
-    style={{
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.10)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#fff",
-      cursor: "pointer",
-      fontWeight: 900,
-      minHeight: 52,
-    }}
-  >
-    {topsTab === "day" ? "← Назад" : "← " + (topsTab === "week" ? "День" : "Неделя")}
-  </button>
-
+  {tab === "tops" && (
   <div
     style={{
-      fontSize: 18,
-      fontWeight: 900,
-      textAlign: "center",
-      lineHeight: 1.2,
+      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
     }}
   >
-    {topsTab === "day"
-      ? "Топ за день"
-      : topsTab === "week"
-      ? "Топ за неделю"
-      : "Топ за месяц"}
-  </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "92px 1fr 92px",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => {
+          if (topsTab === "day") {
+            setTab("home");
+          } else if (topsTab === "week") {
+            setTopsTab("day");
+          } else {
+            setTopsTab("week");
+          }
+        }}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+          minHeight: 52,
+        }}
+      >
+        {topsTab === "day" ? "← Назад" : "← " + (topsTab === "week" ? "День" : "Неделя")}
+      </button>
 
-  <button
-    onClick={() => {
-      if (topsTab === "day") setTopsTab("week");
-      else if (topsTab === "week") setTopsTab("month");
-    }}
-    disabled={topsTab === "month"}
-    style={{
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.10)",
-      background: topsTab === "month" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)",
-      color: topsTab === "month" ? "rgba(255,255,255,0.35)" : "#fff",
-      cursor: topsTab === "month" ? "default" : "pointer",
-      fontWeight: 900,
-      minHeight: 52,
-      visibility: topsTab === "month" ? "hidden" : "visible",
-    }}
-  >
-    {topsTab === "day" ? "Неделя →" : "Месяц →"}
-  </button>
-  
+      <div
+        style={{
+          fontSize: 18,
+          fontWeight: 900,
+          textAlign: "center",
+          lineHeight: 1.2,
+        }}
+      >
+        {topsTab === "day"
+          ? "Топ за день"
+          : topsTab === "week"
+          ? "Топ за неделю"
+          : "Топ за месяц"}
+      </div>
+
+      <button
+        onClick={() => {
+          if (topsTab === "day") setTopsTab("week");
+          else if (topsTab === "week") setTopsTab("month");
+        }}
+        disabled={topsTab === "month"}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: topsTab === "month" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)",
+          color: topsTab === "month" ? "rgba(255,255,255,0.35)" : "#fff",
+          cursor: topsTab === "month" ? "default" : "pointer",
+          fontWeight: 900,
+          minHeight: 52,
+          visibility: topsTab === "month" ? "hidden" : "visible",
+        }}
+      >
+        {topsTab === "day" ? "Неделя →" : "Месяц →"}
+      </button>
+    </div>
 
     {popularLoading ? (
       <div style={{ padding: 16, opacity: 0.7 }}>
         Загрузка популярных треков...
       </div>
-   ) : currentTopTracks.length === 0 ? (
-  <div
-    style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.04)",
-      textAlign: "center",
-    }}
-  >
-    <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>
-      Пока нет данных
-    </div>
+    ) : currentTopTracks.length === 0 ? (
+      <div
+        style={{
+          padding: 16,
+          borderRadius: 18,
+          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(255,255,255,0.04)",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>
+          Пока нет данных
+        </div>
 
-    <div style={{ opacity: 0.75, marginBottom: 14, lineHeight: 1.5 }}>
-      Стань первым — послушай трек!
-    </div>
+        <div style={{ opacity: 0.75, marginBottom: 14, lineHeight: 1.5 }}>
+          Стань первым — запусти трек и попади в топ.
+        </div>
 
-    <button
-      onClick={() => setTab("home")}
-      style={{
-        padding: "12px 14px",
-        borderRadius: 16,
-        border: "none",
-        background: "rgba(59,130,246,0.95)",
-        color: "#000",
-        fontWeight: 900,
-        cursor: "pointer",
-      }}
-    >
-      Случайные треки
-    </button>
-  </div>
-) : (
+        <button
+          onClick={() => setTab("home")}
+          style={{
+            padding: "12px 14px",
+            borderRadius: 16,
+            border: "none",
+            background: "rgba(59,130,246,0.95)",
+            color: "#000",
+            fontWeight: 900,
+            cursor: "pointer",
+          }}
+        >
+          Случайные треки
+        </button>
+      </div>
+    ) : (
       <TrackList
         tracks={currentTopTracks}
         currentTrackId={currentTrackId}
