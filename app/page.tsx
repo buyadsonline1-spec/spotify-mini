@@ -1482,79 +1482,101 @@ function openCurrentTrackMenu() {
 
   {tab === "tops" && (
   <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "102px 1fr 102px",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14,
+  }}
+>
+  <button
+    onClick={() => {
+      if (topsTab === "day") {
+        setTab("home");
+      } else if (topsTab === "week") {
+        setTopsTab("day");
+      } else {
+        setTopsTab("week");
+      }
+    }}
     style={{
-      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
+      height: 46,
+      borderRadius: 14,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 900,
+      fontSize: 14,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      whiteSpace: "nowrap",
+      padding: "0 12px",
     }}
   >
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "92px 1fr 92px",
-        alignItems: "center",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
+    <span style={{ fontSize: 17, lineHeight: 1 }}>←</span>
+    <span>
+      {topsTab === "day"
+        ? "Назад"
+        : topsTab === "week"
+        ? "День"
+        : "Неделя"}
+    </span>
+  </button>
+
+  <div
+    style={{
+      fontSize: 18,
+      fontWeight: 900,
+      textAlign: "center",
+      lineHeight: 1.2,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {topsTab === "day"
+      ? "Топ за день"
+      : topsTab === "week"
+      ? "Топ за неделю"
+      : "Топ за месяц"}
+  </div>
+
+  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+    {topsTab !== "month" ? (
       <button
         onClick={() => {
-          if (topsTab === "day") {
-            setTab("home");
-          } else if (topsTab === "week") {
-            setTopsTab("day");
-          } else {
-            setTopsTab("week");
-          }
+          if (topsTab === "day") setTopsTab("week");
+          else if (topsTab === "week") setTopsTab("month");
         }}
+        
         style={{
-          padding: "10px 12px",
+          width: 102,
+          height: 46,
           borderRadius: 14,
           border: "1px solid rgba(255,255,255,0.10)",
           background: "rgba(255,255,255,0.06)",
           color: "#fff",
           cursor: "pointer",
           fontWeight: 900,
-          minHeight: 52,
+          fontSize: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          whiteSpace: "nowrap",
+          padding: "0 12px",
         }}
       >
-        {topsTab === "day" ? "← Назад" : "← " + (topsTab === "week" ? "День" : "Неделя")}
+        <span>{topsTab === "day" ? "Неделя" : "Месяц"}</span>
+        <span style={{ fontSize: 17, lineHeight: 1 }}>→</span>
       </button>
-
-      <div
-        style={{
-          fontSize: 18,
-          fontWeight: 900,
-          textAlign: "center",
-          lineHeight: 1.2,
-        }}
-      >
-        {topsTab === "day"
-          ? "Топ за день"
-          : topsTab === "week"
-          ? "Топ за неделю"
-          : "Топ за месяц"}
-      </div>
-
-      <button
-        onClick={() => {
-          if (topsTab === "day") setTopsTab("week");
-          else if (topsTab === "week") setTopsTab("month");
-        }}
-        disabled={topsTab === "month"}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: topsTab === "month" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)",
-          color: topsTab === "month" ? "rgba(255,255,255,0.35)" : "#fff",
-          cursor: topsTab === "month" ? "default" : "pointer",
-          fontWeight: 900,
-          minHeight: 52,
-          visibility: topsTab === "month" ? "hidden" : "visible",
-        }}
-      >
-        {topsTab === "day" ? "Неделя →" : "Месяц →"}
-      </button>
-    </div>
+    ) : (
+      <div style={{ width: 102 }} />
+    )}
+  </div>
+</div>
 
     {popularLoading ? (
       <div style={{ padding: 16, opacity: 0.7 }}>
@@ -2046,7 +2068,7 @@ function openCurrentTrackMenu() {
 
     alignItems: "center",
     justifyContent: "center",
-    
+
     cursor: "pointer",
     overflow: "hidden",
     border: "1px solid rgba(255,255,255,0.08)",
