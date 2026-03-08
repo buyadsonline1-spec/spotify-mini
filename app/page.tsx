@@ -1550,7 +1550,7 @@ function openCurrentTrackMenu() {
           if (topsTab === "day") setTopsTab("week");
           else if (topsTab === "week") setTopsTab("month");
         }}
-        
+
         style={{
           width: 102,
           height: 46,
@@ -1575,7 +1575,6 @@ function openCurrentTrackMenu() {
     ) : (
       <div style={{ width: 102 }} />
     )}
-  </div>
 </div>
 
     {popularLoading ? (
