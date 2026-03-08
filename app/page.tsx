@@ -1442,93 +1442,74 @@ function openCurrentTrackMenu() {
 
 {tab === "tops" && (
   <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "92px 1fr 92px",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14,
+  }}
+>
+  <button
+    onClick={() => {
+      if (topsTab === "day") {
+        setTab("home");
+      } else if (topsTab === "week") {
+        setTopsTab("day");
+      } else {
+        setTopsTab("week");
+      }
+    }}
     style={{
-      padding: 16,
-      borderRadius: 18,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
-      paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24,
+      padding: "10px 12px",
+      borderRadius: 14,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 900,
+      minHeight: 52,
     }}
   >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
-      <button
-        onClick={() => setTab("home")}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-        }}
-      >
-        ← Назад
-      </button>
+    {topsTab === "day" ? "← Назад" : "← " + (topsTab === "week" ? "День" : "Неделя")}
+  </button>
 
-      <div style={{ fontSize: 18, fontWeight: 900 }}>
-        {topsTab === "day"
-          ? "Топ за день"
-          : topsTab === "week"
-          ? "Топ за неделю"
-          : "Топ за месяц"}
-      </div>
+  <div
+    style={{
+      fontSize: 18,
+      fontWeight: 900,
+      textAlign: "center",
+      lineHeight: 1.2,
+    }}
+  >
+    {topsTab === "day"
+      ? "Топ за день"
+      : topsTab === "week"
+      ? "Топ за неделю"
+      : "Топ за месяц"}
+  </div>
 
-      {topsTab === "day" ? (
-        <button
-          onClick={() => setTopsTab("week")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          Неделя →
-        </button>
-      ) : topsTab === "week" ? (
-        <button
-          onClick={() => setTopsTab("month")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          Месяц →
-        </button>
-      ) : (
-        <button
-          onClick={() => setTopsTab("week")}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-          }}
-        >
-          ← Неделя
-        </button>
-      )}
-    </div>
+  <button
+    onClick={() => {
+      if (topsTab === "day") setTopsTab("week");
+      else if (topsTab === "week") setTopsTab("month");
+    }}
+    disabled={topsTab === "month"}
+    style={{
+      padding: "10px 12px",
+      borderRadius: 14,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: topsTab === "month" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)",
+      color: topsTab === "month" ? "rgba(255,255,255,0.35)" : "#fff",
+      cursor: topsTab === "month" ? "default" : "pointer",
+      fontWeight: 900,
+      minHeight: 52,
+      visibility: topsTab === "month" ? "hidden" : "visible",
+    }}
+  >
+    {topsTab === "day" ? "Неделя →" : "Месяц →"}
+  </button>
+</div>
 
     {popularLoading ? (
       <div style={{ padding: 16, opacity: 0.7 }}>
