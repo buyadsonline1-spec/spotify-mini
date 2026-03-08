@@ -107,6 +107,7 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);  
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
+  const [favQuery, setFavQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
   const [plan, setPlan] = useState<"free" | "unlimited">("free");
   const currentTopTracks = useMemo<Track[]>(() => {
@@ -955,9 +956,17 @@ if (!supabase) return;
   }, [tracks, query]);
 
   const favoriteTracks = useMemo(() => {
-    if (favIds.size === 0) return [];
-    return tracks.filter((t) => favIds.has(t.id));
-  }, [tracks, favIds]);
+  const list = tracks.filter((t) => favIds.has(t.id));
+
+  const q = favQuery.trim().toLowerCase();
+  if (!q) return list;
+
+  return list.filter(
+    (t) =>
+      t.title.toLowerCase().includes(q) ||
+      t.artist.toLowerCase().includes(q)
+  );
+}, [tracks, favIds, favQuery]);
 
   // --- queue depends on tab (home uses filtered, favorites uses fav list) ---
   const queue = useMemo(() => {
@@ -1616,11 +1625,63 @@ function openCurrentTrackMenu() {
 
  {tab === "favorites" && (
   <>
-    <div style={{ fontWeight: 900, marginBottom: 10 }}>Favorites</div>
+    <div
+      style={{
+        fontWeight: 900,
+        fontSize: 20,
+        marginBottom: 12,
+      }}
+    >
+      Favorites ({favIds.size})
+    </div>
+
+  <div style={{ position: "relative", marginBottom: 14 }}>
+  <input
+    value={favQuery}
+    onChange={(e) => setFavQuery(e.target.value)}
+    placeholder="Поиск по избранным..."
+    style={{
+      width: "100%",
+      padding: "12px 44px 12px 14px",
+      borderRadius: 16,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      outline: "none",
+    }}
+  />
+
+  {favQuery && (
+    <button
+      onClick={() => setFavQuery("")}
+      style={{
+        position: "absolute",
+        right: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 28,
+        height: 28,
+        borderRadius: 999,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.08)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        display: "grid",
+        placeItems: "center",
+        padding: 0,
+      }}
+      aria-label="Очистить поиск"
+      title="Очистить поиск"
+    >
+      ✕
+    </button>
+  )}
+</div>
 
     {favoriteTracks.length === 0 ? (
       <div style={{ opacity: 0.7, padding: 12 }}>
-        Нет избранных треков
+        Нет избранных треков. Нажми ♥ у трека чтобы сохранить.
       </div>
     ) : (
       <TrackList
