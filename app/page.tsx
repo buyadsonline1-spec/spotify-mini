@@ -242,24 +242,17 @@ function renderPopularSection(
   ))}
 </div>
 
-              {"plays" in track && typeof (track as any).plays === "number" && (
-                <div
-                  style={{
-                    fontSize: 12,
-                    opacity: 0.6,
-                    fontWeight: 700,
-                  }}
-                >
-                  {(track as any).plays}
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
+              {typeof (track as any).plays === "number" ? (
+  <div
+    style={{
+      fontSize: 12,
+      opacity: 0.6,
+      fontWeight: 700,
+    }}
+  >
+    {(track as any).plays}
+  </div>
+) : null}
 
 async function uploadPlaylistCover() {
   if (!supabase || !openedPlaylist || !playlistCoverFile) return;
