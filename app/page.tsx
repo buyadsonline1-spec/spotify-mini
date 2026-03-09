@@ -3159,25 +3159,26 @@ function TrackList({
   onPlay: (id: string) => void;
   onOpenTrackMenu: (track: Track) => void;
 }) {
-
+  
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
   }
 
   return (
-    
+
     <div
-  style={{
-    display: "grid",
-    gap: 10,
-    width: "100%",
-    minWidth: 0,
-  }}
->
-    
+      style={{
+        display: "grid",
+        gap: 10,
+        width: "100%",
+        minWidth: 0,
+      }}
+    >
+      {tracks.map((t) => {
+        const isActive = currentTrackId === t.id;
 
         return (
-          
+
           <div
             key={t.id}
             style={{
@@ -3198,7 +3199,7 @@ function TrackList({
           >
             <button
               onClick={() => onPlay(t.id)}
-              
+
               style={{
                 all: "unset",
                 cursor: "pointer",
@@ -3233,6 +3234,7 @@ function TrackList({
                 >
                   {t.title}
                 </div>
+
                 <div
                   style={{
                     opacity: 0.7,
@@ -3248,7 +3250,7 @@ function TrackList({
               </div>
             </button>
 
-                  <button
+            <button
               onClick={() => onOpenTrackMenu(t)}
               style={{
                 width: 38,
@@ -3261,8 +3263,7 @@ function TrackList({
                 cursor: "pointer",
                 flex: "0 0 auto",
               }}
-              aria-label="more"
-              title="Ещё"
+
             >
               ⋯
             </button>
