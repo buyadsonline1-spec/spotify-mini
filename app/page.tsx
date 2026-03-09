@@ -8,6 +8,8 @@ type Tab =
   | "home"
   | "tops"
   | "genres"
+  | "albums"
+  | "album"
   | "favorites"
   | "profile"
   | "playlists"
@@ -21,11 +23,20 @@ type Track = {
   audio_url: string;
   cover_url?: string | null;
   genre?: string | null;
+  album?: string | null;
 };
 
 type Playlist = {
   id: string;
   name: string;
+  cover_url?: string | null;
+};
+
+type Album = {
+  id: string;
+  title: string;
+  artist_id?: string | null;
+  artist_name?: string | null;
   cover_url?: string | null;
 };
 
@@ -101,10 +112,12 @@ export default function Home() {
   const [playlistCoverFile, setPlaylistCoverFile] = useState<File | null>(null);
   const [isSavingPlaylist, setIsSavingPlaylist] = useState(false);
   const [openedPlaylist, setOpenedPlaylist] = useState<Playlist | null>(null);
+  const [openedAlbum, setOpenedAlbum] = useState<Album | null>(null);
   const [isSeeking, setIsSeeking] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
   const [uploadGenre, setUploadGenre] = useState("");
+  const [uploadAlbum, setUploadAlbum] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [uploadAudioFile, setUploadAudioFile] = useState<File | null>(null);
   const [uploadCoverFile, setUploadCoverFile] = useState<File | null>(null);
@@ -679,6 +692,7 @@ const currentTrack = useMemo(
   audio_url: t.audio_url,
   cover_url: t.cover_url ?? null,
   genre: t.genre ?? null,
+  album: t.album ?? null,
 }));
 
   setTracks(normalized);
@@ -771,93 +785,184 @@ const currentTrack = useMemo(
     }
 
     setPlaylists(
-  (data ?? []).map((p: any) => ({
-    id: String(p.id),
-    name: p.name,
-    cover_url: p.cover_url ?? null,
-  }))
-);
-}
-
-  async function handleUploadTrack() {
-  if (!supabase) return;
-
-  if (!uploadTitle.trim() || !uploadArtist.trim() || !uploadAudioFile) {
-    alert("Заполни title, artist и выбери mp3");
-    return;
+    (data ?? []).map((p: any) => ({
+      id: String(p.id),
+      name: p.name,
+      cover_url: p.cover_url ?? null,
+     }))
+    );
   }
 
-  try {
-    setIsUploading(true);
+  async function handleUploadTrack() {
+    if (!supabase) return;
 
-    const audioExt = uploadAudioFile.name.split(".").pop() || "mp3";
-    const audioPath = `audio/${Date.now()}-${Math.random()
-      .toString(16)
-      .slice(2)}.${audioExt}`;
+    if (!uploadTitle.trim() || !uploadArtist.trim() || !uploadAudioFile) {
+      alert("Заполни title, artist и выбери mp3");
+      return;
+    }
 
-    const { error: audioErr } = await supabase.storage
-      .from("tracks")
-      .upload(audioPath, uploadAudioFile, {
-        cacheControl: "3600",
-        upsert: false,
-      });
+    try {
+      setIsUploading(true);
 
-    if (audioErr) throw audioErr;
+      const title = uploadTitle.trim();
+      const artistName = uploadArtist.trim();
+      const genreName = uploadGenre.trim();
+      const albumTitle = uploadAlbum.trim();
 
-    const {
-      data: { publicUrl: audioUrl },
-    } = supabase.storage.from("tracks").getPublicUrl(audioPath);
-
-    let coverUrl: string | null = null;
-
-    if (uploadCoverFile) {
-      const coverExt = uploadCoverFile.name.split(".").pop() || "jpg";
-      const coverPath = `covers/${Date.now()}-${Math.random()
+      const audioExt = uploadAudioFile.name.split(".").pop() || "mp3";
+      const audioPath = `audio/${Date.now()}-${Math.random()
         .toString(16)
-        .slice(2)}.${coverExt}`;
+        .slice(2)}.${audioExt}`;
 
-      const { error: coverErr } = await supabase.storage
-        .from("covers")
-        .upload(coverPath, uploadCoverFile, {
+      const { error: audioErr } = await supabase.storage
+        .from("tracks")
+        .upload(audioPath, uploadAudioFile, {
           cacheControl: "3600",
           upsert: false,
         });
 
-      if (coverErr) throw coverErr;
+      if (audioErr) throw audioErr;
 
       const {
-        data: { publicUrl },
-      } = supabase.storage.from("covers").getPublicUrl(coverPath);
+        data: { publicUrl: audioUrl },
+      } = supabase.storage.from("tracks").getPublicUrl(audioPath);
 
-      coverUrl = publicUrl;
+      let coverUrl: string | null = null;
+
+      if (uploadCoverFile) {
+        const coverExt = uploadCoverFile.name.split(".").pop() || "jpg";
+        const coverPath = `covers/${Date.now()}-${Math.random()
+          .toString(16)
+          .slice(2)}.${coverExt}`;
+
+        const { error: coverErr } = await supabase.storage
+          .from("covers")
+          .upload(coverPath, uploadCoverFile, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (coverErr) throw coverErr;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("covers").getPublicUrl(coverPath);
+
+        coverUrl = publicUrl;
+      }
+
+      // 1. artist
+      let artistId: string | null = null;
+
+      const { data: existingArtist, error: artistLoadErr } = await supabase
+        .from("artists")
+        .select("id,name")
+        .eq("name", artistName)
+        .maybeSingle();
+
+      if (artistLoadErr) throw artistLoadErr;
+
+      if (existingArtist) {
+        artistId = existingArtist.id;
+      } else {
+        const { data: newArtist, error: artistInsertErr } = await supabase
+          .from("artists")
+          .insert({ name: artistName })
+          .select("id")
+          .single();
+
+        if (artistInsertErr) throw artistInsertErr;
+        artistId = newArtist.id;
+      }
+
+      // 2. genre
+      let genreId: string | null = null;
+
+      if (genreName) {
+        const { data: existingGenre, error: genreLoadErr } = await supabase
+          .from("genres")
+          .select("id,name")
+          .eq("name", genreName)
+          .maybeSingle();
+
+        if (genreLoadErr) throw genreLoadErr;
+
+        if (existingGenre) {
+          genreId = existingGenre.id;
+        } else {
+          const { data: newGenre, error: genreInsertErr } = await supabase
+            .from("genres")
+            .insert({ name: genreName })
+            .select("id")
+            .single();
+
+          if (genreInsertErr) throw genreInsertErr;
+          genreId = newGenre.id;
+        }
+      }
+
+      // 3. album
+      let albumId: string | null = null;
+
+      if (albumTitle && artistId) {
+        const { data: existingAlbum, error: albumLoadErr } = await supabase
+          .from("albums")
+          .select("id,title,artist_id")
+          .eq("title", albumTitle)
+          .eq("artist_id", artistId)
+          .maybeSingle();
+
+        if (albumLoadErr) throw albumLoadErr;
+
+        if (existingAlbum) {
+          albumId = existingAlbum.id;
+        } else {
+          const { data: newAlbum, error: albumInsertErr } = await supabase
+            .from("albums")
+            .insert({
+              title: albumTitle,
+              artist_id: artistId,
+              cover_url: coverUrl,
+            })
+            .select("id")
+            .single();
+
+          if (albumInsertErr) throw albumInsertErr;
+          albumId = newAlbum.id;
+        }
+      }
+
+      // 4. track
+      const { error: insertErr } = await supabase.from("tracks").insert({
+        title,
+        artist: artistName,
+        genre: genreName || null,
+        album: albumTitle || null,
+        audio_url: audioUrl,
+        cover_url: coverUrl,
+        artist_id: artistId,
+        genre_id: genreId,
+        album_id: albumId,
+      });
+
+      if (insertErr) throw insertErr;
+
+      setUploadTitle("");
+      setUploadArtist("");
+      setUploadGenre("");
+      setUploadAlbum("");
+      setUploadAudioFile(null);
+      setUploadCoverFile(null);
+
+      await fetchTracks();
+      alert("Трек загружен");
+    } catch (e: any) {
+      console.error("upload track error:", e);
+      alert("Ошибка загрузки трека: " + (e?.message || JSON.stringify(e)));
+    } finally {
+      setIsUploading(false);
     }
-
-   const { error: insertErr } = await supabase.from("tracks").insert({
-  title: uploadTitle.trim(),
-  artist: uploadArtist.trim(),
-  genre: uploadGenre.trim() || null,
-  audio_url: audioUrl,
-  cover_url: coverUrl,
-});
-
-    if (insertErr) throw insertErr;
-
-   setUploadTitle("");
-    setUploadArtist("");
-    setUploadGenre("");
-    setUploadAudioFile(null);
-    setUploadCoverFile(null);
-
-    await fetchTracks();
-    alert("Трек загружен");
-  } catch (e: any) {
-  console.error("upload track error:", e);
-  alert("Ошибка загрузки трека: " + (e?.message || JSON.stringify(e)));
-
-  } finally {
-    setIsUploading(false);
   }
-}
 
   async function createPlaylist() {
     const name = newPlaylistName.trim();
@@ -968,7 +1073,7 @@ if (!supabase) return;
 
   const favoriteTracks = useMemo(() => {
   const list = tracks.filter((t) => favIds.has(t.id));
-  
+
 
   const q = favQuery.trim().toLowerCase();
   if (!q) return list;
@@ -994,6 +1099,42 @@ const genreTracks = useMemo(() => {
     (t) => (typeof t.genre === "string" ? t.genre.trim() : "") === selectedGenre
   );
 }, [tracks, selectedGenre]);
+
+const albums = useMemo<Album[]>(() => {
+  const map = new Map<string, Album>();
+
+  for (const t of tracks) {
+    const albumTitle = typeof t.album === "string" ? t.album.trim() : "";
+    if (!albumTitle) continue;
+
+    const key = `${albumTitle}__${t.artist || ""}`;
+
+    if (!map.has(key)) {
+      map.set(key, {
+        id: key,
+        title: albumTitle,
+        artist_name: t.artist || null,
+        cover_url: t.cover_url ?? null,
+      });
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
+}, [tracks]);
+
+const albumTracks = useMemo(() => {
+  if (!openedAlbum) return [];
+
+  return tracks.filter((t) => {
+    const albumTitle = typeof t.album === "string" ? t.album.trim() : "";
+    return (
+      albumTitle === openedAlbum.title &&
+      (t.artist || "") === (openedAlbum.artist_name || "")
+    );
+  });
+}, [tracks, openedAlbum]);
 
   // --- queue depends on tab (home uses filtered, favorites uses fav list) ---
   const queue = useMemo(() => {
@@ -1449,7 +1590,7 @@ function openCurrentTrackMenu() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: "1fr 1fr 1fr",
         gap: 12,
         marginBottom: 18,
       }}
@@ -1484,6 +1625,21 @@ function openCurrentTrackMenu() {
         }}
       >
         Жанры
+      </button>
+      <button
+        onClick={() => setTab("albums")}
+        style={{
+          padding: "16px 14px",
+          borderRadius: 18,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          fontWeight: 900,
+          cursor: "pointer",
+          fontSize: 16,
+        }}
+      >
+        Альбомы
       </button>
     </div>
 
@@ -1765,6 +1921,271 @@ function openCurrentTrackMenu() {
         onOpenTrackMenu={(track) => openTrackMenu(track)}
       />
     )}
+  </div>
+)}
+
+{tab === "albums" && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <button
+        onClick={() => setTab("home")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ fontSize: 18, fontWeight: 900 }}>Альбомы</div>
+      <div style={{ width: 72 }} />
+    </div>
+
+    {albums.length === 0 ? (
+      <div style={{ opacity: 0.7, padding: 12 }}>
+        Пока нет альбомов. Добавь album при загрузке трека.
+      </div>
+    ) : (
+      <div style={{ display: "grid", gap: 12 }}>
+        {albums.map((album) => (
+          <button
+            key={album.id}
+            onClick={() => {
+              setOpenedAlbum(album);
+              setTab("album");
+            }}
+            style={{
+              textAlign: "left",
+              padding: 12,
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.04)",
+              color: "#fff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 14,
+                flex: "0 0 auto",
+                background: album.cover_url
+                  ? `url(${album.cover_url}) center/cover no-repeat`
+                  : "rgba(255,255,255,0.08)",
+                display: "grid",
+                placeItems: "center",
+                overflow: "hidden",
+                fontSize: 20,
+                opacity: 0.9,
+              }}
+            >
+              {!album.cover_url ? "♪" : ""}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 16,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {album.title}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 13,
+                  opacity: 0.7,
+                  marginTop: 4,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {album.artist_name || "Unknown artist"}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  opacity: 0.55,
+                  marginTop: 4,
+                }}
+              >
+                {
+                  tracks.filter(
+                    (t) =>
+                      (t.album || "").trim() === album.title &&
+                      (t.artist || "") === (album.artist_name || "")
+                  ).length
+                }{" "}
+                треков
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+{tab === "album" && openedAlbum && (
+  <div
+    style={{
+      padding: 16,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 16,
+      }}
+    >
+      <button
+        onClick={() => setTab("albums")}
+        style={{
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          cursor: "pointer",
+          fontWeight: 900,
+        }}
+      >
+        ← Назад
+      </button>
+
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 18,
+            fontWeight: 900,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {openedAlbum.title}
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.7, marginTop: 2 }}>
+          {openedAlbum.artist_name || "Unknown artist"}
+        </div>
+      </div>
+    </div>
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "96px 1fr",
+        gap: 16,
+        alignItems: "start",
+        marginBottom: 18,
+      }}
+    >
+      <div
+        style={{
+          width: 96,
+          height: 96,
+          borderRadius: 18,
+          background: openedAlbum.cover_url
+            ? `url(${openedAlbum.cover_url}) center/cover no-repeat`
+            : "rgba(255,255,255,0.08)",
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
+          fontSize: 24,
+        }}
+      >
+        {!openedAlbum.cover_url ? "♪" : ""}
+      </div>
+
+      <div>
+        <div style={{ opacity: 0.75, fontSize: 14 }}>
+          {albumTracks.length} треков
+        </div>
+
+        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+          <button
+            onClick={() => {
+              if (!albumTracks.length) return;
+              playTrackById(albumTracks[0].id);
+            }}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 16,
+              border: "none",
+              background: "rgba(59,130,246,0.95)",
+              color: "#000",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            ▶ Play album
+          </button>
+
+          <button
+            onClick={() => {
+              if (!albumTracks.length) return;
+              const random =
+                albumTracks[Math.floor(Math.random() * albumTracks.length)];
+              playTrackById(random.id);
+            }}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.10)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            🔀 Shuffle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <TrackList
+      tracks={albumTracks}
+      currentTrackId={currentTrackId}
+      favIds={favIds}
+      onPlay={(id) => playTrackById(id)}
+      onOpenTrackMenu={(track) => openTrackMenu(track)}
+    />
   </div>
 )}
 
@@ -2391,6 +2812,21 @@ function openCurrentTrackMenu() {
                   outline: "none",
                 }}
               />
+
+              <input
+                value={uploadAlbum}
+                onChange={(e) => setUploadAlbum(e.target.value)}
+                placeholder="Альбом"
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />  
 
               <label
                 style={{
