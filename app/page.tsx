@@ -3159,7 +3159,7 @@ function TrackList({
   onPlay: (id: string) => void;
   onOpenTrackMenu: (track: Track) => void;
 }) {
-  
+
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
   }
@@ -3263,7 +3263,8 @@ function TrackList({
                 cursor: "pointer",
                 flex: "0 0 auto",
               }}
-
+              aria-label="more"
+              title="Ещё"
             >
               ⋯
             </button>
