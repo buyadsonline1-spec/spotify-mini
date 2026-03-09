@@ -92,7 +92,7 @@ export default function Home() {
   const [popularDay, setPopularDay] = useState<PopularTrack[]>([]);
   const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
   const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+
   const [topsTab, setTopsTab] = useState<"day" | "week" | "month">("day");
   const [popularLoading, setPopularLoading] = useState(true);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
@@ -105,6 +105,7 @@ export default function Home() {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
   const [uploadGenre, setUploadGenre] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [uploadAudioFile, setUploadAudioFile] = useState<File | null>(null);
   const [uploadCoverFile, setUploadCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);  
@@ -996,18 +997,18 @@ const genreTracks = useMemo(() => {
 }, [tracks, favIds, favQuery]);
 
 const genres = useMemo(() => {
-  return Array.from(
-    new Set(
-      tracks
-        .map((t) => t.genre?.trim())
-        .filter((g): g is string => Boolean(g))
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  const values = tracks
+    .map((t) => (typeof t.genre === "string" ? t.genre.trim() : ""))
+    .filter((g) => g.length > 0);
+
+  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 }, [tracks]);
 
 const genreTracks = useMemo(() => {
   if (!selectedGenre) return [];
-  return tracks.filter((t) => t.genre?.trim() === selectedGenre);
+  return tracks.filter(
+    (t) => (typeof t.genre === "string" ? t.genre.trim() : "") === selectedGenre
+  );
 }, [tracks, selectedGenre]);
 
   // --- queue depends on tab (home uses filtered, favorites uses fav list) ---
@@ -2442,11 +2443,10 @@ function openCurrentTrackMenu() {
                     accept="image/*"
                     style={{ display: "none" }}
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      setPlaylistCoverFile(file);
-                      uploadPlaylistCover(file);
-                    }}
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadCoverFile(file);
+                  }}                  
                   />
               </label>
 
