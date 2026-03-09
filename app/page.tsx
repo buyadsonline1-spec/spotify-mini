@@ -136,6 +136,18 @@ export default function Home() {
     }>
   >([]);
 
+  const externalTracks = useMemo<Track[]>(() => {
+  return externalResults.map((item) => ({
+    id: item.id,
+    title: item.title,
+    artist: item.artist,
+    audio_url: "",
+    cover_url: null,
+    genre: null,
+    album: item.album ?? null,
+  }));
+}, [externalResults]);
+
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [favQuery, setFavQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
@@ -1172,27 +1184,33 @@ if (!supabase) return;
     );
   }, [tracks, query]);
 
-  useEffect(() => {
+  const homeSearchTracks = useMemo(() => {
+  if (!query.trim()) return randomTracks;
+
+  if (filteredTracks.length > 0) return filteredTracks;
+
+  return externalTracks;
+}, [query, randomTracks, filteredTracks, externalTracks]);
+
+ useEffect(() => {
   const trimmed = query.trim();
+
+  if (tab !== "home") {
+    setExternalResults([]);
+    return;
+  }
 
   if (!trimmed) {
     setExternalResults([]);
     return;
   }
 
-  if (tab !== "home") return;
-
-  if (filteredTracks.length > 0) {
-    setExternalResults([]);
-    return;
-  }
-
   const timeout = setTimeout(() => {
     searchExternalMusic(trimmed);
-  }, 500);
+  }, 450);
 
   return () => clearTimeout(timeout);
-}, [query, tab, filteredTracks.length]);
+}, [query, tab]);
 
   const favoriteTracks = useMemo(() => {
   const list = tracks.filter((t) => favIds.has(t.id));
@@ -1709,25 +1727,6 @@ function openCurrentTrackMenu() {
   </div>
   
 
-<div style={{ marginTop: 10 }}>
-  <button
-    onClick={() => searchExternalMusic()}
-    disabled={!query.trim() || isSearchingExternal}
-    style={{
-      width: "100%",
-      padding: "12px 14px",
-      borderRadius: 16,
-      border: "1px solid rgba(255,255,255,0.10)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#fff",
-      fontWeight: 900,
-      cursor: !query.trim() || isSearchingExternal ? "default" : "pointer",
-      opacity: !query.trim() || isSearchingExternal ? 0.7 : 1,
-    }}
-  >
-    {isSearchingExternal ? "Поиск..." : "Искать во внешней базе"}
-  </button>
-</div>
 
       </div>
 
@@ -1792,18 +1791,50 @@ function openCurrentTrackMenu() {
     </div>
 
     <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
-      Случайные треки
-    </div>
+  {query.trim()
+    ? filteredTracks.length > 0
+      ? "Результаты поиска"
+      : isSearchingExternal
+      ? "Ищем во внешней базе..."
+      : externalTracks.length > 0
+      ? "Результаты из внешней базы"
+      : "Ничего не найдено"
+    : "Случайные треки"}
+</div>
 
-    <TrackList
-      tracks={randomTracks}
-      currentTrackId={currentTrackId}
-      favIds={favIds}
-      onPlay={(id) => playTrackById(id)}
-      onOpenTrackMenu={(track) => openTrackMenu(track)}
-    />
+{query.trim() && !isSearchingExternal && filteredTracks.length === 0 && externalTracks.length === 0 ? (
+  <div style={{ opacity: 0.7, padding: 12 }}>
+    Ничего не найдено по этому запросу.
+  </div>
+) : (
+  <TrackList
+    tracks={homeSearchTracks}
+    currentTrackId={currentTrackId}
+    favIds={favIds}
+    onPlay={(id) => {
+      const localTrackExists = tracks.some((t) => t.id === id);
 
-    
+      if (localTrackExists) {
+        playTrackById(id);
+        return;
+      }
+
+      const externalTrack = externalResults.find((r) => r.id === id);
+      if (!externalTrack) return;
+
+      setUploadTitle(externalTrack.title);
+      setUploadArtist(externalTrack.artist);
+      if (externalTrack.album) setUploadAlbum(externalTrack.album);
+      setTab("upload");
+    }}
+    onOpenTrackMenu={(track) => {
+      const localTrackExists = tracks.some((t) => t.id === track.id);
+      if (!localTrackExists) return;
+      openTrackMenu(track);
+    }}
+  />
+)}
+
   </div>
 )}
 
@@ -4004,24 +4035,38 @@ function TrackList({
               </div>
             </button>
 
-            <button
-              onClick={() => onOpenTrackMenu(t)}
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                fontWeight: 900,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-              aria-label="more"
-              title="Ещё"
-            >
-              ⋯
-            </button>
+            {t.audio_url ? (
+  <button
+    onClick={() => onOpenTrackMenu(t)}
+    style={{
+      width: 38,
+      height: 38,
+      borderRadius: 999,
+      border: "1px solid rgba(255,255,255,0.12)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      fontWeight: 900,
+      cursor: "pointer",
+      flex: "0 0 auto",
+    }}
+    aria-label="more"
+    title="Ещё"
+  >
+    ⋯
+  </button>
+) : (
+  <div
+    style={{
+      minWidth: 72,
+      textAlign: "right",
+      fontSize: 12,
+      opacity: 0.65,
+      fontWeight: 800,
+    }}
+  >
+    import
+  </div>
+)}
           </div>
         );
       })}
