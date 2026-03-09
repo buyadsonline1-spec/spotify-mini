@@ -37,9 +37,13 @@ export async function GET(req: Request) {
       year,
       mbid,
     });
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    console.error("music-meta route error:", e);
 
-    return NextResponse.json({ success: false });
-  }
+    return NextResponse.json({
+      success: false,
+      error: e?.message || String(e),
+      hasLastFmKey: Boolean(process.env.LASTFM_API_KEY),
+    });
+ }
 }
