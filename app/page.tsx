@@ -3907,50 +3907,7 @@ function TrackList({
   if (tracks.length === 0) {
     return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
   }
-
-  {query.trim() && filteredTracks.length === 0 && (
-  <div style={{ marginTop: 18 }}>
-    <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10 }}>
-      Внешняя база
-    </div>
-
-    {isSearchingExternal ? (
-      <div style={{ opacity: 0.65, padding: 12 }}>
-        Ищем во внешней базе...
-      </div>
-    ) : externalResults.length === 0 ? (
-      <div style={{ opacity: 0.65, padding: 12 }}>
-        Ничего не найдено ни в библиотеке, ни во внешней базе.
-      </div>
-    ) : (
-      <div style={{ display: "grid", gap: 10 }}>
-        {externalResults.map((item) => (
-          <div
-            key={item.id}
-            style={{
-              padding: 12,
-              borderRadius: 18,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.05)",
-            }}
-          >
-            <div style={{ fontWeight: 900, fontSize: 14 }}>{item.title}</div>
-
-            <div style={{ opacity: 0.72, fontSize: 13, marginTop: 4 }}>
-              {item.artist}
-              {item.album ? ` · ${item.album}` : ""}
-              {item.year ? ` · ${item.year}` : ""}
-            </div>
-
-            <div style={{ opacity: 0.5, fontSize: 12, marginTop: 4 }}>
-              {item.source === "musicbrainz" ? "MusicBrainz" : "Last.fm"}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+   
 
   return (
 
