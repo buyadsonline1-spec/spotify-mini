@@ -118,6 +118,7 @@ export default function Home() {
   const [uploadArtist, setUploadArtist] = useState("");
   const [uploadGenre, setUploadGenre] = useState("");
   const [uploadAlbum, setUploadAlbum] = useState("");
+  const [isDetectingMeta, setIsDetectingMeta] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [uploadAudioFile, setUploadAudioFile] = useState<File | null>(null);
   const [uploadCoverFile, setUploadCoverFile] = useState<File | null>(null);
@@ -793,10 +794,71 @@ const currentTrack = useMemo(
     );
   }
 
+  async function detectTrackMeta() {
+    if (!uploadTitle.trim() || !uploadArtist.trim()) {
+      alert("Сначала заполни название трека и исполнителя");
+      return;
+    }
+
+    try {
+      setIsDetectingMeta(true);
+
+      const res = await fetch(
+        `/api/music-meta?artist=${encodeURIComponent(uploadArtist.trim())}&track=${encodeURIComponent(uploadTitle.trim())}`
+      );
+
+      const meta = await res.json();
+
+      if (!meta?.success) {
+        alert("Метаданные не найдены");
+        return;
+      }
+
+      if (meta.genre && !uploadGenre.trim()) {
+        setUploadGenre(meta.genre);
+      }
+
+      if (meta.album && !uploadAlbum.trim()) {
+        setUploadAlbum(meta.album);
+      }
+
+      if (!meta.genre && !meta.album) {
+        alert("Нашли только частичные данные");
+      }
+    } catch (e) {
+      console.error("detectTrackMeta error:", e);
+      alert("Не удалось получить метаданные");
+    } finally {
+      setIsDetectingMeta(false);
+    }
+  }
+
   async function handleUploadTrack() {
+    let detectedAlbum: string | null = null;
+    let detectedYear: number | null = null;
+    let detectedMbid: string | null = null;
     if (!supabase) return;
 
     if (!uploadTitle.trim() || !uploadArtist.trim() || !uploadAudioFile) {
+      let detectedAlbum: string | null = null;
+      let detectedYear: number | null = null;
+      let detectedMbid: string | null = null;
+
+      try {
+        const metaRes = await fetch(
+          `/api/music-meta?artist=${encodeURIComponent(uploadArtist)}&track=${encodeURIComponent(uploadTitle)}`
+        );
+
+        const meta = await metaRes.json();
+
+        if (meta?.success) {
+          detectedAlbum = meta.album;
+          detectedYear = meta.year ? Number(meta.year) : null;
+          detectedMbid = meta.mbid;
+        }
+      } catch (e) {
+        console.log("metadata lookup failed");
+      }
       alert("Заполни title, artist и выбери mp3");
       return;
     }
@@ -934,15 +996,15 @@ const currentTrack = useMemo(
 
       // 4. track
       const { error: insertErr } = await supabase.from("tracks").insert({
-        title,
-        artist: artistName,
-        genre: genreName || null,
-        album: albumTitle || null,
+        title: uploadTitle.trim(),
+        artist: uploadArtist.trim(),
+        genre: uploadGenre.trim() || null,
+        album: detectedAlbum || null,
+        year: detectedYear || null,
+        mbid: detectedMbid || null,
         audio_url: audioUrl,
         cover_url: coverUrl,
-        artist_id: artistId,
-        genre_id: genreId,
-        album_id: albumId,
+
       });
 
       if (insertErr) throw insertErr;
@@ -2827,6 +2889,24 @@ function openCurrentTrackMenu() {
                   outline: "none",
                 }}
               />  
+
+              <button
+                onClick={detectTrackMeta}
+                disabled={isDetectingMeta}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontWeight: 900,
+                  cursor: isDetectingMeta ? "default" : "pointer",
+                  opacity: isDetectingMeta ? 0.7 : 1,
+                }}
+              >
+                {isDetectingMeta ? "Поиск..." : "🔍 Найти метаданные"}
+              </button>
 
               <label
                 style={{
