@@ -1420,7 +1420,7 @@ function openCurrentTrackMenu() {
       </div>
 
        {/* Content */}
-<div style={{ padding: "0 20px" }}>
+<div style={{ padding: "0 16px", width: "100%", boxSizing: "border-box" }}>
   {tab === "home" && (
   <div style={{ paddingBottom: currentTrack && hasStartedPlayback ? 110 : 24 }}>
     <div
@@ -3166,10 +3166,14 @@ function TrackList({
 
   return (
     
-    <div style={{ display: "grid", gap: 10 }}>
-      {tracks.map((t) => {
-        const isActive = currentTrackId === t.id;
-        const isFav = favIds.has(t.id);
+    <div
+  style={{
+    display: "grid",
+    gap: 10,
+    width: "100%",
+    minWidth: 0,
+  }}
+>
     
 
         return (
@@ -3177,6 +3181,8 @@ function TrackList({
           <div
             key={t.id}
             style={{
+              width: "100%",
+              boxSizing: "border-box",
               padding: 12,
               borderRadius: 18,
               border: isActive
