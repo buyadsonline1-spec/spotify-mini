@@ -529,7 +529,7 @@ function renderPopularSection(title: string, items: PopularTrack[]) {
 
                 <div
                   style={{
-                    opacity: 0.7,
+                    opacity: 0.82
                     fontSize: 12,
                     marginTop: 2,
                     whiteSpace: "nowrap",
@@ -1630,7 +1630,7 @@ function openCurrentTrackMenu() {
       paddingBottom: currentTrack ? 160 : 90,
 
       // базовый фон на всякий случай
-      background: "#070A12",
+      background: "#08101d",
       position: "relative",
       overflow: "hidden",
 
@@ -1670,9 +1670,10 @@ function openCurrentTrackMenu() {
         inset: 0,
         zIndex: 0,
         pointerEvents: "none",
-        background:
-          "radial-gradient(1200px 700px at 20% -10%, rgba(59,130,246,0.35), transparent 60%)," +
-          "linear-gradient(to bottom, rgba(7,10,18,0.35), rgba(7,10,18,0.92))",
+       background:
+  "radial-gradient(1200px 700px at 20% -10%, rgba(59,130,246,0.42), transparent 60%)," +
+  "radial-gradient(900px 500px at 85% 10%, rgba(37,99,235,0.18), transparent 55%)," +
+  "linear-gradient(to bottom, rgba(7,10,18,0.28), rgba(7,10,18,0.88))",
       }}
     />
 
@@ -1694,7 +1695,7 @@ function openCurrentTrackMenu() {
         >
           <div>
             <div style={{ fontSize: 26, fontWeight: 900 }}>Music Base</div>
-            <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
+            <div style={{ opacity: 0.82, fontSize: 13, marginTop: 2 }}>
               {user ? `Привет, ${user.first_name}` : "Музыка в Telegram"}
             </div>
           </div>
@@ -1731,8 +1732,9 @@ function openCurrentTrackMenu() {
         width: "100%",
         padding: "12px 44px 12px 14px",
         borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.14)",
+background: "rgba(255,255,255,0.08)",
+boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
         color: "#fff",
         outline: "none",
       }}
@@ -1791,8 +1793,9 @@ function openCurrentTrackMenu() {
         style={{
           padding: "16px 14px",
           borderRadius: 18,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.08)",
+border: "1px solid rgba(255,255,255,0.13)",
+boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
           color: "#fff",
           fontWeight: 900,
           cursor: "pointer",
@@ -1807,8 +1810,9 @@ function openCurrentTrackMenu() {
         style={{
           padding: "16px 14px",
           borderRadius: 18,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.08)",
+border: "1px solid rgba(255,255,255,0.13)",
+boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
           color: "#fff",
           fontWeight: 900,
           cursor: "pointer",
@@ -1823,8 +1827,9 @@ function openCurrentTrackMenu() {
         style={{
           padding: "16px 14px",
           borderRadius: 18,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.08)",
+border: "1px solid rgba(255,255,255,0.13)",
+boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
           color: "#fff",
           fontWeight: 900,
           cursor: "pointer",
@@ -3998,11 +4003,11 @@ function SearchTrackList({
               padding: 12,
               borderRadius: 18,
               border: isActive
-                ? "1px solid rgba(59,130,246,0.55)"
-                : "1px solid rgba(255,255,255,0.08)",
+  ? "1px solid rgba(96,165,250,0.65)"
+  : "1px solid rgba(255,255,255,0.11)",
               background: isActive
-                ? "rgba(59,130,246,0.10)"
-                : "rgba(255,255,255,0.05)",
+              ? "rgba(59,130,246,0.16)"
+              : "rgba(255,255,255,0.07)",
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -4050,7 +4055,7 @@ function SearchTrackList({
 
                 <div
                   style={{
-                    opacity: 0.7,
+                    opacity: 0.82
                     fontSize: 13,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
@@ -4159,11 +4164,11 @@ function TrackList({
               padding: 12,
               borderRadius: 18,
               border: isActive
-                ? "1px solid rgba(59,130,246,0.55)"
-                : "1px solid rgba(255,255,255,0.08)",
+  ? "1px solid rgba(96,165,250,0.65)"
+  : "1px solid rgba(255,255,255,0.11)",
               background: isActive
-                ? "rgba(59,130,246,0.10)"
-                : "rgba(255,255,255,0.05)",
+              ? "rgba(59,130,246,0.16)"
+              : "rgba(255,255,255,0.07)",
               display: "flex",
               alignItems: "center",
               gap: 12,
