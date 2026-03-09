@@ -3738,7 +3738,7 @@ function openCurrentTrackMenu() {
         />
       </div>
     </div>
-    </div>
+    
   );
 }
 
