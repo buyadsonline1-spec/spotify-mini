@@ -968,23 +968,7 @@ if (!supabase) return;
 
   const favoriteTracks = useMemo(() => {
   const list = tracks.filter((t) => favIds.has(t.id));
-
-  const genres = useMemo(() => {
-  const unique = Array.from(
-    new Set(
-      tracks
-        .map((t) => (t.genre || "").trim())
-        .filter(Boolean)
-    )
-  );
-
-  return unique.sort((a, b) => a.localeCompare(b));
-}, [tracks]);
-
-const genreTracks = useMemo(() => {
-  if (!selectedGenre) return [];
-  return tracks.filter((t) => (t.genre || "").trim() === selectedGenre);
-}, [tracks, selectedGenre]);
+  
 
   const q = favQuery.trim().toLowerCase();
   if (!q) return list;
