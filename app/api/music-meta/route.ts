@@ -109,7 +109,24 @@ export async function GET(req: Request) {
 
     if (mbRes.ok) {
       const mbData = await mbRes.json();
-      const recording = mbData.recordings?.[0];
+      const recordings = Array.isArray(mbData?.recordings) ? mbData.recordings : [];
+
+      const normalizedTrack = track.trim().toLowerCase();
+      const normalizedArtist = artist.trim().toLowerCase();
+
+      const recording =
+        recordings.find((r: any) => {
+          const titleOk = String(r?.title || "").trim().toLowerCase() === normalizedTrack;
+          const artistOk = Array.isArray(r?.["artist-credit"])
+            ? r["artist-credit"].some(
+                (a: any) =>
+                  String(a?.name || "").trim().toLowerCase() === normalizedArtist
+              )
+            : false;
+
+          return titleOk && artistOk;
+        }) || recordings[0];
+
       const release = recording?.releases?.[0];
 
       album = release?.title || null;
@@ -121,10 +138,12 @@ export async function GET(req: Request) {
   }
 
   // Last.fm
+  // Last.fm
   try {
     if (lastfmKey) {
       const base = "https://ws.audioscrobbler.com/2.0/";
 
+      // 1) track.getTopTags
       const trackTagsUrl =
         `${base}?method=track.getTopTags` +
         `&artist=${encodeURIComponent(artist)}` +
@@ -145,6 +164,30 @@ export async function GET(req: Request) {
           .filter(Boolean);
       }
 
+      // 2) album.getInfo → иногда там есть теги
+      if (tags.length === 0 && album) {
+        const albumInfoUrl =
+          `${base}?method=album.getInfo` +
+          `&artist=${encodeURIComponent(artist)}` +
+          `&album=${encodeURIComponent(album)}` +
+          `&api_key=${encodeURIComponent(lastfmKey)}` +
+          `&format=json`;
+
+        const albumInfoRes = await fetch(albumInfoUrl, { cache: "no-store" });
+
+        if (albumInfoRes.ok) {
+          const albumInfoData = await albumInfoRes.json();
+          const albumTags = Array.isArray(albumInfoData?.album?.tags?.tag)
+            ? albumInfoData.album.tags.tag
+            : [];
+
+          tags = albumTags
+            .map((t: any) => (typeof t?.name === "string" ? t.name : ""))
+            .filter(Boolean);
+        }
+      }
+
+      // 3) artist.getTopTags
       if (tags.length === 0) {
         const artistTagsUrl =
           `${base}?method=artist.getTopTags` +
