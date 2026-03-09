@@ -44,6 +44,18 @@ type PopularTrack = Track & {
   plays?: number;
 };
 
+type UnifiedTrack = {
+  id: string;
+  title: string;
+  artist: string;
+  audio_url?: string | null;
+  cover_url?: string | null;
+  genre?: string | null;
+  album?: string | null;
+  source: "local" | "external";
+  isPlayable: boolean;
+};
+
 type Profile = {
   id: string;
   plan: "free" | "unlimited";
@@ -126,27 +138,19 @@ export default function Home() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
   const [externalResults, setExternalResults] = useState<
-    Array<{
-      id: string;
-      title: string;
-      artist: string;
-      album?: string | null;
-      year?: number | null;
-      source: "musicbrainz" | "lastfm";
-    }>
-  >([]);
+  Array<{
+    id: string;
+    title: string;
+    artist: string;
+    album?: string | null;
+    year?: number | null;
+    source: string;
+    audio_url?: string | null;
+    cover_url?: string | null;
+  }>
+>([]);
 
-  const externalTracks = useMemo<Track[]>(() => {
-  return externalResults.map((item) => ({
-    id: item.id,
-    title: item.title,
-    artist: item.artist,
-    audio_url: "",
-    cover_url: null,
-    genre: null,
-    album: item.album ?? null,
-  }));
-}, [externalResults]);
+ 
 
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [favQuery, setFavQuery] = useState("");
@@ -1184,13 +1188,53 @@ if (!supabase) return;
     );
   }, [tracks, query]);
 
-  const homeSearchTracks = useMemo(() => {
-  if (!query.trim()) return randomTracks;
+  const localUnifiedTracks = useMemo<UnifiedTrack[]>(() => {
+  return filteredTracks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    artist: t.artist,
+    audio_url: t.audio_url,
+    cover_url: t.cover_url ?? null,
+    genre: t.genre ?? null,
+    album: t.album ?? null,
+    source: "local",
+    isPlayable: Boolean(t.audio_url),
+  }));
+}, [filteredTracks]);
 
-  if (filteredTracks.length > 0) return filteredTracks;
+const externalUnifiedTracks = useMemo<UnifiedTrack[]>(() => {
+  return externalResults.map((item) => ({
+    id: item.id,
+    title: item.title,
+    artist: item.artist,
+    audio_url: item.audio_url ?? null,
+    cover_url: item.cover_url ?? null,
+    genre: null,
+    album: item.album ?? null,
+    source: "external",
+    isPlayable: Boolean(item.audio_url),
+  }));
+}, [externalResults]);
 
-  return externalTracks;
-}, [query, randomTracks, filteredTracks, externalTracks]);
+const homeSearchTracks = useMemo<UnifiedTrack[]>(() => {
+  if (!query.trim()) {
+    return randomTracks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      audio_url: t.audio_url,
+      cover_url: t.cover_url ?? null,
+      genre: t.genre ?? null,
+      album: t.album ?? null,
+      source: "local",
+      isPlayable: Boolean(t.audio_url),
+    }));
+  }
+
+  if (localUnifiedTracks.length > 0) return localUnifiedTracks;
+
+  return externalUnifiedTracks;
+}, [query, randomTracks, localUnifiedTracks, externalUnifiedTracks]);
 
  useEffect(() => {
   const trimmed = query.trim();
@@ -1811,32 +1855,58 @@ function openCurrentTrackMenu() {
         Ничего не найдено по этому запросу.
       </div>
     ) : (
-      <TrackList
-        tracks={homeSearchTracks}
-        currentTrackId={currentTrackId}
-        favIds={favIds}
-        onPlay={(id) => {
-          const localTrackExists = tracks.some((t) => t.id === id);
+      <SearchTrackList
+  tracks={homeSearchTracks}
+  currentTrackId={currentTrackId}
+  onPlay={(track) => {
+    if (!track.isPlayable) return;
 
-          if (localTrackExists) {
-            playTrackById(id);
-            return;
-          }
+    if (track.source === "local") {
+      playTrackById(track.id);
+      return;
+    }
 
-          const externalTrack = externalResults.find((r) => r.id === id);
-          if (!externalTrack) return;
+    if (track.audio_url) {
+      const existing = tracks.find((t) => t.id === track.id);
 
-          setUploadTitle(externalTrack.title);
-          setUploadArtist(externalTrack.artist);
-          if (externalTrack.album) setUploadAlbum(externalTrack.album);
-          setTab("upload");
-        }}
-        onOpenTrackMenu={(track) => {
-          const localTrackExists = tracks.some((t) => t.id === track.id);
-          if (!localTrackExists) return;
-          openTrackMenu(track);
-        }}
-      />
+      if (!existing) {
+        const tempTrack: Track = {
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          audio_url: track.audio_url,
+          cover_url: track.cover_url ?? null,
+          genre: track.genre ?? null,
+          album: track.album ?? null,
+        };
+
+        setTracks((prev) => {
+          if (prev.some((t) => t.id === tempTrack.id)) return prev;
+          return [tempTrack, ...prev];
+        });
+      }
+
+      setTimeout(() => {
+        playTrackById(track.id);
+      }, 0);
+    }
+  }}
+  onImport={(track) => {
+    setUploadTitle(track.title);
+    setUploadArtist(track.artist);
+    if (track.album) setUploadAlbum(track.album);
+    if (track.genre) setUploadGenre(track.genre);
+    setTab("upload");
+  }}
+  onOpenTrackMenu={(track) => {
+    if (track.source !== "local") return;
+
+    const localTrack = tracks.find((t) => t.id === track.id);
+    if (!localTrack) return;
+
+    openTrackMenu(localTrack);
+  }}
+/>
     )}
   </div>
 )}
@@ -3887,6 +3957,163 @@ function TabButton({
       <div style={{ fontSize: 18 }}>{icon}</div>
       <div style={{ fontSize: 11 }}>{label}</div>
     </button>
+  );
+}
+
+function SearchTrackList({
+  tracks,
+  currentTrackId,
+  onPlay,
+  onImport,
+  onOpenTrackMenu,
+}: {
+  tracks: UnifiedTrack[];
+  currentTrackId: string | null;
+  onPlay: (track: UnifiedTrack) => void;
+  onImport: (track: UnifiedTrack) => void;
+  onOpenTrackMenu: (track: UnifiedTrack) => void;
+}) {
+  if (tracks.length === 0) {
+    return <div style={{ opacity: 0.75, padding: 12 }}>Пусто.</div>;
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: 10,
+        width: "100%",
+        minWidth: 0,
+      }}
+    >
+      {tracks.map((t) => {
+        const isActive = currentTrackId === t.id && t.source === "local";
+
+        return (
+          <div
+            key={t.id}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: 12,
+              borderRadius: 18,
+              border: isActive
+                ? "1px solid rgba(59,130,246,0.55)"
+                : "1px solid rgba(255,255,255,0.08)",
+              background: isActive
+                ? "rgba(59,130,246,0.10)"
+                : "rgba(255,255,255,0.05)",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <button
+              onClick={() => {
+                if (t.isPlayable) onPlay(t);
+                else onImport(t);
+              }}
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 12,
+                  background: t.cover_url
+                    ? `url(${t.cover_url}) center/cover no-repeat`
+                    : "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(255,255,255,0.06))",
+                  flex: "0 0 auto",
+                }}
+              />
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {t.title}
+                </div>
+
+                <div
+                  style={{
+                    opacity: 0.7,
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    marginTop: 2,
+                  }}
+                >
+                  {t.artist}
+                  {t.album ? ` · ${t.album}` : ""}
+                </div>
+              </div>
+            </button>
+
+            {t.isPlayable ? (
+              t.source === "local" ? (
+                <button
+                  onClick={() => onOpenTrackMenu(t)}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    flex: "0 0 auto",
+                  }}
+                  aria-label="more"
+                  title="Ещё"
+                >
+                  ⋯
+                </button>
+              ) : (
+                <div
+                  style={{
+                    minWidth: 72,
+                    textAlign: "right",
+                    fontSize: 12,
+                    opacity: 0.75,
+                    fontWeight: 800,
+                  }}
+                >
+                  play
+                </div>
+              )
+            ) : (
+              <div
+                style={{
+                  minWidth: 72,
+                  textAlign: "right",
+                  fontSize: 12,
+                  opacity: 0.65,
+                  fontWeight: 800,
+                }}
+              >
+                найдено
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
