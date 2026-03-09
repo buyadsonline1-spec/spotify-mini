@@ -125,6 +125,18 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);  
   const [tracks, setTracks] = useState<Track[]>([]);
   const [query, setQuery] = useState("");
+  const [externalResults, setExternalResults] = useState<
+    Array<{
+      id: string;
+      title: string;
+      artist: string;
+      album?: string | null;
+      year?: number | null;
+      source: "musicbrainz" | "lastfm";
+    }>
+  >([]);
+
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [favQuery, setFavQuery] = useState("");
   const [playsCount, setPlaysCount] = useState(0);
   const [plan, setPlan] = useState<"free" | "unlimited">("free");
@@ -154,10 +166,37 @@ useEffect(() => {
 }, []);
 
 
+
 function generateInviteCode(userId: string) {
   const clean = userId.replace(/[^a-zA-Z0-9]/g, "").slice(-6);
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `PKR${clean}${rand}`.slice(0, 12);
+}
+
+async function searchExternalMusic(searchText?: string) {
+  const q = (searchText ?? query).trim();
+  if (!q) {
+    setExternalResults([]);
+    return;
+  }
+
+  try {
+    setIsSearchingExternal(true);
+
+    const res = await fetch(`/api/search-music?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (data?.success) {
+      setExternalResults(Array.isArray(data.results) ? data.results : []);
+    } else {
+      setExternalResults([]);
+    }
+  } catch (e) {
+    console.error("searchExternalMusic error:", e);
+    setExternalResults([]);
+  } finally {
+    setIsSearchingExternal(false);
+  }
 }
 
 async function ensureProfile(currentUserId: string) {
@@ -1642,7 +1681,28 @@ function openCurrentTrackMenu() {
       </button>
     )}
   </div>
+  
 )}
+<div style={{ marginTop: 10 }}>
+  <button
+    onClick={() => searchExternalMusic()}
+    disabled={!query.trim() || isSearchingExternal}
+    style={{
+      width: "100%",
+      padding: "12px 14px",
+      borderRadius: 16,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.06)",
+      color: "#fff",
+      fontWeight: 900,
+      cursor: !query.trim() || isSearchingExternal ? "default" : "pointer",
+      opacity: !query.trim() || isSearchingExternal ? 0.7 : 1,
+    }}
+  >
+    {isSearchingExternal ? "Поиск..." : "Искать во внешней базе"}
+  </button>
+</div>
+
       </div>
 
        {/* Content */}
