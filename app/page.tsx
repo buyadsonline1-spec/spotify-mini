@@ -4055,7 +4055,7 @@ function SearchTrackList({
 
                 <div
                   style={{
-                    opacity: 0.82
+                    opacity: 0.82,
                     fontSize: 13,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
