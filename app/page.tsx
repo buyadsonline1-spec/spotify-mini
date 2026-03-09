@@ -1837,20 +1837,20 @@ function openCurrentTrackMenu() {
 
     <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
       {query.trim()
-        ? filteredTracks.length > 0
-          ? "Результаты поиска"
-          : isSearchingExternal
-          ? "Ищем во внешней базе..."
-          : externalTracks.length > 0
-          ? "Результаты из внешней базы"
-          : "Ничего не найдено"
-        : "Случайные треки"}
+  ? filteredTracks.length > 0
+    ? "Результаты поиска"
+    : isSearchingExternal
+    ? "Ищем во внешней базе..."
+    : externalUnifiedTracks.length > 0
+    ? "Результаты из внешней базы"
+    : "Ничего не найдено"
+  : "Случайные треки"}
     </div>
 
     {query.trim() &&
     !isSearchingExternal &&
     filteredTracks.length === 0 &&
-    externalTracks.length === 0 ? (
+    homeSearchTracks.length === 0 ? (
       <div style={{ opacity: 0.7, padding: 12 }}>
         Ничего не найдено по этому запросу.
       </div>
