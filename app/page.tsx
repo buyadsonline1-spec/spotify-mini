@@ -20,6 +20,7 @@ type Track = {
   artist: string;
   audio_url: string;
   cover_url?: string | null;
+  genre?: string | null;
 };
 
 type Playlist = {
@@ -91,6 +92,7 @@ export default function Home() {
   const [popularDay, setPopularDay] = useState<PopularTrack[]>([]);
   const [popularWeek, setPopularWeek] = useState<PopularTrack[]>([]);
   const [popularMonth, setPopularMonth] = useState<PopularTrack[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [topsTab, setTopsTab] = useState<"day" | "week" | "month">("day");
   const [popularLoading, setPopularLoading] = useState(true);
   const [trackMenuOpen, setTrackMenuOpen] = useState(false);
@@ -102,6 +104,7 @@ export default function Home() {
   const [isSeeking, setIsSeeking] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
+  const [uploadGenre, setUploadGenre] = useState("");
   const [uploadAudioFile, setUploadAudioFile] = useState<File | null>(null);
   const [uploadCoverFile, setUploadCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);  
@@ -669,12 +672,13 @@ const currentTrack = useMemo(
   }
 
  const normalized: Track[] = (data ?? []).map((t: any) => ({
-    id: String(t.id),
-    title: t.title ?? "Unknown title",
-    artist: t.artist ?? "Unknown artist",
-    audio_url: t.audio_url,
-    cover_url: t.cover_url ?? null,
-  }));
+  id: String(t.id),
+  title: t.title ?? "Unknown title",
+  artist: t.artist ?? "Unknown artist",
+  audio_url: t.audio_url,
+  cover_url: t.cover_url ?? null,
+  genre: t.genre ?? null,
+}));
 
   setTracks(normalized);
 }
@@ -827,17 +831,19 @@ const currentTrack = useMemo(
       coverUrl = publicUrl;
     }
 
-    const { error: insertErr } = await supabase.from("tracks").insert({
-      title: uploadTitle.trim(),
-      artist: uploadArtist.trim(),
-      audio_url: audioUrl,
-      cover_url: coverUrl,
-    });
+   const { error: insertErr } = await supabase.from("tracks").insert({
+  title: uploadTitle.trim(),
+  artist: uploadArtist.trim(),
+  genre: uploadGenre.trim() || null,
+  audio_url: audioUrl,
+  cover_url: coverUrl,
+});
 
     if (insertErr) throw insertErr;
 
-    setUploadTitle("");
+   setUploadTitle("");
     setUploadArtist("");
+    setUploadGenre("");
     setUploadAudioFile(null);
     setUploadCoverFile(null);
 
@@ -961,6 +967,23 @@ if (!supabase) return;
 
   const favoriteTracks = useMemo(() => {
   const list = tracks.filter((t) => favIds.has(t.id));
+
+  const genres = useMemo(() => {
+  const unique = Array.from(
+    new Set(
+      tracks
+        .map((t) => (t.genre || "").trim())
+        .filter(Boolean)
+    )
+  );
+
+  return unique.sort((a, b) => a.localeCompare(b));
+}, [tracks]);
+
+const genreTracks = useMemo(() => {
+  if (!selectedGenre) return [];
+  return tracks.filter((t) => (t.genre || "").trim() === selectedGenre);
+}, [tracks, selectedGenre]);
 
   const q = favQuery.trim().toLowerCase();
   if (!q) return list;
@@ -1657,7 +1680,13 @@ function openCurrentTrackMenu() {
       }}
     >
       <button
-        onClick={() => setTab("home")}
+        onClick={() => {
+          if (selectedGenre) {
+            setSelectedGenre(null);
+          } else {
+            setTab("home");
+          }
+        }}
         style={{
           padding: "10px 12px",
           borderRadius: 14,
@@ -1671,17 +1700,71 @@ function openCurrentTrackMenu() {
         ← Назад
       </button>
 
-      <div style={{ fontSize: 18, fontWeight: 900 }}>Жанры</div>
+      <div
+        style={{
+          fontSize: 18,
+          fontWeight: 900,
+          textAlign: "center",
+          minWidth: 0,
+          flex: 1,
+        }}
+      >
+        {selectedGenre ? selectedGenre : "Жанры"}
+      </div>
+
       <div style={{ width: 72 }} />
     </div>
 
-    <div style={{ display: "grid", gap: 24 }}>
-      {renderPopularSection("Pop", tracks)}
-      {renderPopularSection("Rock", tracks)}
-      {renderPopularSection("Hip-Hop", tracks)}
-      {renderPopularSection("Electronic", tracks)}
-      {renderPopularSection("Lo-fi", tracks)}
-    </div>
+    {!selectedGenre ? (
+      genres.length === 0 ? (
+        <div style={{ opacity: 0.7, padding: 12 }}>
+          Пока нет жанров. Добавь поле genre у треков в базе.
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+          }}
+        >
+          {genres.map((genre) => (
+            <button
+              key={genre}
+              onClick={() => setSelectedGenre(genre)}
+              style={{
+                padding: "16px 14px",
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+                fontSize: 15,
+                textAlign: "left",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 900 }}>{genre}</div>
+              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                {tracks.filter((t) => (t.genre || "").trim() === genre).length} треков
+              </div>
+            </button>
+          ))}
+        </div>
+      )
+    ) : genreTracks.length === 0 ? (
+      <div style={{ opacity: 0.7, padding: 12 }}>
+        В этом жанре пока нет треков.
+      </div>
+    ) : (
+      <TrackList
+        tracks={genreTracks}
+        currentTrackId={currentTrackId}
+        favIds={favIds}
+        onPlay={(id) => playTrackById(id)}
+        onOpenTrackMenu={(track) => openTrackMenu(track)}
+      />
+    )}
   </div>
 )}
 
@@ -2283,6 +2366,21 @@ function openCurrentTrackMenu() {
                 value={uploadArtist}
                 onChange={(e) => setUploadArtist(e.target.value)}
                 placeholder="Исполнитель"
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <input
+                value={uploadGenre}
+                onChange={(e) => setUploadGenre(e.target.value)}
+                placeholder="Жанр"
                 style={{
                   width: "100%",
                   padding: "12px 14px",
