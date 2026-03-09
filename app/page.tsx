@@ -529,7 +529,7 @@ function renderPopularSection(title: string, items: PopularTrack[]) {
 
                 <div
                   style={{
-                    opacity: 0.82
+                    opacity: 0.82,
                     fontSize: 12,
                     marginTop: 2,
                     whiteSpace: "nowrap",
