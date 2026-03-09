@@ -1773,6 +1773,7 @@ function openCurrentTrackMenu() {
       >
         Жанры
       </button>
+
       <button
         onClick={() => setTab("albums")}
         style={{
@@ -1791,50 +1792,52 @@ function openCurrentTrackMenu() {
     </div>
 
     <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
-  {query.trim()
-    ? filteredTracks.length > 0
-      ? "Результаты поиска"
-      : isSearchingExternal
-      ? "Ищем во внешней базе..."
-      : externalTracks.length > 0
-      ? "Результаты из внешней базы"
-      : "Ничего не найдено"
-    : "Случайные треки"}
-</div>
+      {query.trim()
+        ? filteredTracks.length > 0
+          ? "Результаты поиска"
+          : isSearchingExternal
+          ? "Ищем во внешней базе..."
+          : externalTracks.length > 0
+          ? "Результаты из внешней базы"
+          : "Ничего не найдено"
+        : "Случайные треки"}
+    </div>
 
-{query.trim() && !isSearchingExternal && filteredTracks.length === 0 && externalTracks.length === 0 ? (
-  <div style={{ opacity: 0.7, padding: 12 }}>
-    Ничего не найдено по этому запросу.
-  </div>
-) : (
-  <TrackList
-    tracks={homeSearchTracks}
-    currentTrackId={currentTrackId}
-    favIds={favIds}
-    onPlay={(id) => {
-      const localTrackExists = tracks.some((t) => t.id === id);
+    {query.trim() &&
+    !isSearchingExternal &&
+    filteredTracks.length === 0 &&
+    externalTracks.length === 0 ? (
+      <div style={{ opacity: 0.7, padding: 12 }}>
+        Ничего не найдено по этому запросу.
+      </div>
+    ) : (
+      <TrackList
+        tracks={homeSearchTracks}
+        currentTrackId={currentTrackId}
+        favIds={favIds}
+        onPlay={(id) => {
+          const localTrackExists = tracks.some((t) => t.id === id);
 
-      if (localTrackExists) {
-        playTrackById(id);
-        return;
-      }
+          if (localTrackExists) {
+            playTrackById(id);
+            return;
+          }
 
-      const externalTrack = externalResults.find((r) => r.id === id);
-      if (!externalTrack) return;
+          const externalTrack = externalResults.find((r) => r.id === id);
+          if (!externalTrack) return;
 
-      setUploadTitle(externalTrack.title);
-      setUploadArtist(externalTrack.artist);
-      if (externalTrack.album) setUploadAlbum(externalTrack.album);
-      setTab("upload");
-    }}
-    onOpenTrackMenu={(track) => {
-      const localTrackExists = tracks.some((t) => t.id === track.id);
-      if (!localTrackExists) return;
-      openTrackMenu(track);
-    }}
-  />
-)}
-
+          setUploadTitle(externalTrack.title);
+          setUploadArtist(externalTrack.artist);
+          if (externalTrack.album) setUploadAlbum(externalTrack.album);
+          setTab("upload");
+        }}
+        onOpenTrackMenu={(track) => {
+          const localTrackExists = tracks.some((t) => t.id === track.id);
+          if (!localTrackExists) return;
+          openTrackMenu(track);
+        }}
+      />
+    )}
   </div>
 )}
 
