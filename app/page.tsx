@@ -995,6 +995,21 @@ const genreTracks = useMemo(() => {
   );
 }, [tracks, favIds, favQuery]);
 
+const genres = useMemo(() => {
+  return Array.from(
+    new Set(
+      tracks
+        .map((t) => t.genre?.trim())
+        .filter((g): g is string => Boolean(g))
+    )
+  ).sort((a, b) => a.localeCompare(b));
+}, [tracks]);
+
+const genreTracks = useMemo(() => {
+  if (!selectedGenre) return [];
+  return tracks.filter((t) => t.genre?.trim() === selectedGenre);
+}, [tracks, selectedGenre]);
+
   // --- queue depends on tab (home uses filtered, favorites uses fav list) ---
   const queue = useMemo(() => {
     return tab === "favorites" ? favoriteTracks : filteredTracks;
