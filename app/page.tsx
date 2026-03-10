@@ -1744,7 +1744,7 @@ function openCurrentTrackMenu() {
             </div>
           </div>
         )}
-      </div>
+      
 
       {tab === "favorites" && (
   <div
@@ -1808,6 +1808,7 @@ function openCurrentTrackMenu() {
     </div>
   </div>
 )}
+</div>
 
        {/* Content */}
 <div style={{ padding: "0 16px", width: "100%", boxSizing: "border-box" }}>
