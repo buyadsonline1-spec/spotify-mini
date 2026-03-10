@@ -1751,9 +1751,8 @@ function openCurrentTrackMenu() {
     style={{
       marginTop: 14,
       marginBottom: 16,
-      width: "100%",
-      maxWidth: "100%",
-      boxSizing: "border-box",
+      paddingRight: 0,
+      paddingLeft: 0,
     }}
   >
     <div
@@ -1766,10 +1765,8 @@ function openCurrentTrackMenu() {
         value={favQuery}
         onChange={(e) => setFavQuery(e.target.value)}
         placeholder="Поиск по избранным..."
-        style={{
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
+       style={{
+          width: "100%",
           padding: favQuery.trim() ? "12px 48px 12px 14px" : "12px 14px",
           borderRadius: 16,
           border: "1px solid rgba(255,255,255,0.14)",
@@ -1777,8 +1774,8 @@ function openCurrentTrackMenu() {
           boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
           color: "#fff",
           outline: "none",
-          
-        }}
+          boxSizing: "border-box",
+}}
       />
 
       {favQuery.trim() && (
