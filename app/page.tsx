@@ -1756,7 +1756,11 @@ function openCurrentTrackMenu() {
       }}
     >
       <button
-        onClick={() => setTab("tops")}
+        onClick={() => {
+          setTab("tops");
+          setQuery("");
+          setExternalResults([]);
+        }}
         style={{
           padding: "16px 14px",
           borderRadius: 18,
@@ -1773,7 +1777,11 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
       </button>
 
       <button
-        onClick={() => setTab("genres")}
+        onClick={() => {
+        setTab("genres");
+        setQuery("");
+        setExternalResults([]);
+      }}
         style={{
           padding: "16px 14px",
           borderRadius: 18,
@@ -1790,7 +1798,11 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
       </button>
 
       <button
-        onClick={() => setTab("albums")}
+        onClick={() => {
+        setTab("albums");
+        setQuery("");
+        setExternalResults([]);
+      }}
         style={{
           padding: "16px 14px",
           borderRadius: 18,
@@ -3678,13 +3690,21 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         />
         <TabButton
           active={tab === "favorites"}
-          onClick={() => setTab("favorites")}
+          onClick={() => {
+              setTab("favorites");
+              setQuery("");
+              setExternalResults([]);
+            }}
           label="Favorites"
           icon="♥"
         />
         <TabButton
           active={tab === "profile"}
-          onClick={() => setTab("profile")}
+          onClick={() => {
+            setTab("profile");
+            setQuery("");
+            setExternalResults([]);
+          }}
           label="Profile"
           icon="☺"
         />
