@@ -1645,7 +1645,7 @@ function openCurrentTrackMenu() {
 
             {/* Header */}
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
-        
+
         <div
           style={{
             display: "flex",
@@ -3669,7 +3669,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         </div>
       )}
 
-      {/* Bottom Tabs */}
+           {/* Bottom Tabs */}
       <div
         style={{
           position: "fixed",
@@ -3694,10 +3694,10 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         <TabButton
           active={tab === "favorites"}
           onClick={() => {
-              setTab("favorites");
-              setQuery("");
-              setExternalResults([]);
-            }}
+            setTab("favorites");
+            setQuery("");
+            setExternalResults([]);
+          }}
           label="Favorites"
           icon="♥"
         />
@@ -3713,8 +3713,8 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         />
       </div>
     </div>
-    
-  );
+  </div>
+);
 }
 
 function Btn({
