@@ -1747,7 +1747,15 @@ function openCurrentTrackMenu() {
       </div>
 
       {tab === "favorites" && (
-  <div style={{ marginTop: 14, marginBottom: 16 }}>
+  <div
+    style={{
+      marginTop: 14,
+      marginBottom: 16,
+      width: "100%",
+      maxWidth: "100%",
+      boxSizing: "border-box",
+    }}
+  >
     <div
       style={{
         position: "relative",
@@ -1759,7 +1767,9 @@ function openCurrentTrackMenu() {
         onChange={(e) => setFavQuery(e.target.value)}
         placeholder="Поиск по избранным..."
         style={{
-          width: "100%",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
           padding: favQuery.trim() ? "12px 48px 12px 14px" : "12px 14px",
           borderRadius: 16,
           border: "1px solid rgba(255,255,255,0.14)",
