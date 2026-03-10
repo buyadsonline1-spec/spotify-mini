@@ -1684,59 +1684,64 @@ function openCurrentTrackMenu() {
         </div>
 
         {/* Search only on Home */}
-        {tab === "home" && (
-  <div style={{ marginTop: 14, position: "relative" }}>
-    <input
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-      placeholder="Поиск трека или артиста…"
+  {tab === "home" && (
+  <div style={{ marginTop: 14 }}>
+    <div
       style={{
+        position: "relative",
         width: "100%",
-        padding: "12px 44px 12px 14px",
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.14)",
-background: "rgba(255,255,255,0.08)",
-boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
-        color: "#fff",
-        outline: "none",
       }}
-    />
-
-    </div>
-)}
-    
-
-    {query && (
-      <button
-        onClick={() => setQuery("")}
+    >
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Поиск трека или артиста..."
         style={{
-          position: "absolute",
-          right: 10,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 28,
-          height: 28,
-          borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.10)",
+          width: "100%",
+          padding: query ? "12px 48px 12px 14px" : "12px 14px",
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.14)",
           background: "rgba(255,255,255,0.08)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
           color: "#fff",
-          cursor: "pointer",
-          fontWeight: 900,
-          display: "grid",
-          placeItems: "center",
-          padding: 0,
+          outline: "none",
+          boxSizing: "border-box",
         }}
-        aria-label="Очистить поиск"
-        title="Очистить поиск"
-      >
-        ✕
-      </button>
-    )}
+      />
+
+      {query.trim() && (
+        <button
+          onClick={() => {
+            setQuery("");
+            setExternalResults([]);
+          }}
+          style={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 30,
+            height: 30,
+            borderRadius: 999,
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.08)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 900,
+            display: "grid",
+            placeItems: "center",
+            padding: 0,
+            lineHeight: 1,
+          }}
+          aria-label="Очистить поиск"
+          title="Очистить поиск"
+        >
+          ✕
+        </button>
+      )}
+    </div>
   </div>
-  
-
-
-      </div>
+)}    
 
        {/* Content */}
 <div style={{ padding: "0 16px", width: "100%", boxSizing: "border-box" }}>
@@ -2421,50 +2426,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
     >
       Favorites ({favIds.size})
     </div>
-
-  <div style={{ position: "relative", marginBottom: 14 }}>
-  <input
-    value={favQuery}
-    onChange={(e) => setFavQuery(e.target.value)}
-    placeholder="Поиск по избранным..."
-    style={{
-      width: "100%",
-      padding: "12px 44px 12px 14px",
-      borderRadius: 16,
-      border: "1px solid rgba(255,255,255,0.10)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#fff",
-      outline: "none",
-    }}
-  />
-
-  {favQuery && (
-    <button
-      onClick={() => setFavQuery("")}
-      style={{
-        position: "absolute",
-        right: 10,
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: 28,
-        height: 28,
-        borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(255,255,255,0.08)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 900,
-        display: "grid",
-        placeItems: "center",
-        padding: 0,
-      }}
-      aria-label="Очистить поиск"
-      title="Очистить поиск"
-    >
-      ✕
-    </button>
-  )}
-</div>
+ 
 
     {favoriteTracks.length === 0 ? (
       <div style={{ opacity: 0.7, padding: 12 }}>
