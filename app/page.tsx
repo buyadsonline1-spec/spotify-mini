@@ -2741,7 +2741,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
                       {!p.cover_url ? "♪" : ""}
                     </div>
 
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 900 }}>{p.name}</div>
                       <div style={{ fontSize: 12, opacity: 0.7 }}>
                         Открыть плейлист
@@ -3899,13 +3899,13 @@ function SearchTrackList({
 
   return (
     <div
-      style={{
-        display: "grid",
-        gap: 10,
-        width: "100%",
-        minWidth: 0,
-      }}
-    >
+  style={{
+    display: "grid",
+    gap: 10,
+    width: "100%",
+    minWidth: 0,
+  }}
+>
       {tracks.map((t) => {
         const isActive = currentTrackId === t.id && t.source === "local";
 
@@ -4115,8 +4115,9 @@ function TrackList({
               />
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div
+               <div
                   style={{
+                    minWidth: 0,
                     fontWeight: 900,
                     fontSize: 14,
                     whiteSpace: "nowrap",
