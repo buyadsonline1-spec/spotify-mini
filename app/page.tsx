@@ -2458,6 +2458,53 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
     )}
   </>
 )}
+
+<div style={{ position: "relative", marginBottom: 14 }}>
+  <input
+    value={favQuery}
+    onChange={(e) => setFavQuery(e.target.value)}
+    placeholder="Поиск по избранным..."
+    style={{
+      width: "100%",
+      padding: "12px 44px 12px 14px",
+      borderRadius: 16,
+      border: "1px solid rgba(255,255,255,0.14)",
+      background: "rgba(255,255,255,0.08)",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
+      color: "#fff",
+      outline: "none",
+      boxSizing: "border-box",
+    }}
+  />
+
+  {favQuery.trim() && (
+    <button
+      onClick={() => setFavQuery("")}
+      style={{
+        position: "absolute",
+        right: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 30,
+        height: 30,
+        borderRadius: 999,
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(255,255,255,0.08)",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        display: "grid",
+        placeItems: "center",
+        padding: 0,
+        lineHeight: 1,
+      }}
+      aria-label="Очистить поиск"
+      title="Очистить поиск"
+    >
+      ✕
+    </button>
+  )}
+</div>
     
 
         {tab === "profile" && (
