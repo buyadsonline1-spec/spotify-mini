@@ -1747,7 +1747,7 @@ function openCurrentTrackMenu() {
       </div>
 
       {tab === "favorites" && (
-  <div style={{ marginTop: 14 }}>
+  <div style={{ marginTop: 14, marginBottom: 16 }}>
     <div
       style={{
         position: "relative",
@@ -2488,15 +2488,16 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
 
  {tab === "favorites" && (
   <>
-    <div
-      style={{
-        fontWeight: 900,
-        fontSize: 20,
-        marginBottom: 12,
-      }}
-    >
-      Favorites ({favIds.size})
-    </div>
+   <div
+  style={{
+    fontWeight: 900,
+    fontSize: 20,
+    marginTop: 8,
+    marginBottom: 12,
+  }}
+>
+  Favorites ({favIds.size})
+</div>
  
 
     {favoriteTracks.length === 0 ? (
