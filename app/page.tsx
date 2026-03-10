@@ -1643,8 +1643,7 @@ function openCurrentTrackMenu() {
     <div style={{ position: "relative", zIndex: 1 }}>
 
 
-      {/* Header */}
-
+            {/* Header */}
       <div style={{ padding: 20, position: "sticky", top: 0, zIndex: 5 }}>
         
         <div
@@ -1663,7 +1662,11 @@ function openCurrentTrackMenu() {
           </div>
 
           <button
-            onClick={() => setTab("profile")}
+            onClick={() => {
+              setTab("profile");
+              setQuery("");
+              setExternalResults([]);
+            }}
             style={{
               width: 42,
               height: 42,
@@ -1683,65 +1686,65 @@ function openCurrentTrackMenu() {
           </button>
         </div>
 
-        {/* Search only on Home */}
-  {tab === "home" && (
-  <div style={{ marginTop: 14 }}>
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-      }}
-    >
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Поиск трека или артиста..."
-        style={{
-          width: "100%",
-          padding: query ? "12px 48px 12px 14px" : "12px 14px",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.14)",
-          background: "rgba(255,255,255,0.08)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
-          color: "#fff",
-          outline: "none",
-          boxSizing: "border-box",
-        }}
-      />
+        {tab === "home" && (
+          <div style={{ marginTop: 14 }}>
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+              }}
+            >
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Поиск трека или артиста..."
+                style={{
+                  width: "100%",
+                  padding: query.trim() ? "12px 48px 12px 14px" : "12px 14px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.08)",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
+                  color: "#fff",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
 
-      {query.trim() && (
-        <button
-          onClick={() => {
-            setQuery("");
-            setExternalResults([]);
-          }}
-          style={{
-            position: "absolute",
-            right: 10,
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: 30,
-            height: 30,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.08)",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 900,
-            display: "grid",
-            placeItems: "center",
-            padding: 0,
-            lineHeight: 1,
-          }}
-          aria-label="Очистить поиск"
-          title="Очистить поиск"
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  </div>
-)}    
+              {query.trim() && (
+                <button
+                  onClick={() => {
+                    setQuery("");
+                    setExternalResults([]);
+                  }}
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 30,
+                    height: 30,
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontWeight: 900,
+                    display: "grid",
+                    placeItems: "center",
+                    padding: 0,
+                    lineHeight: 1,
+                  }}
+                  aria-label="Очистить поиск"
+                  title="Очистить поиск"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
        {/* Content */}
 <div style={{ padding: "0 16px", width: "100%", boxSizing: "border-box" }}>
