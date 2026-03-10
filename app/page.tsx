@@ -2137,7 +2137,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "1fr",
             gap: 12,
           }}
         >
@@ -2155,6 +2155,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
                 cursor: "pointer",
                 fontSize: 15,
                 textAlign: "left",
+                width: "100%",
               }}
             >
               <div style={{ fontSize: 16, fontWeight: 900 }}>{genre}</div>
