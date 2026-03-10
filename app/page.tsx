@@ -3055,37 +3055,7 @@ boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
                   outline: "none",
                 }}
               />
-
-              <input
-                value={uploadGenre}
-                onChange={(e) => setUploadGenre(e.target.value)}
-                placeholder="Жанр"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  outline: "none",
-                }}
-              />
-
-              <input
-                value={uploadAlbum}
-                onChange={(e) => setUploadAlbum(e.target.value)}
-                placeholder="Альбом"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  outline: "none",
-                }}
-              />  
-
+              
               <button
                 onClick={detectTrackMeta}
                 disabled={isDetectingMeta}
